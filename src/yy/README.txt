@@ -1,0 +1,1 @@
+Yet another project that shares some YY externs with GMEdit

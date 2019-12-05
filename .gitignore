@@ -1,0 +1,4 @@
+/bin/*
+!/bin/rules.gml
+out/
+test.bat
