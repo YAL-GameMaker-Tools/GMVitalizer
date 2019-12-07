@@ -123,6 +123,7 @@ class VitProject {
 				return;
 			};
 			var outPath = Path.join([dir, gmxPath]);
+			var gmxItem = new SfGmx(single, gmxPath);
 			//
 			switch (single) {
 				case "script": {
@@ -139,6 +140,7 @@ class VitProject {
 				};
 				case "sprite": VitSprite.proc(yy, yyFull, outPath, name);
 				case "font": VitFont.proc(name, yy, yyFull, outPath);
+				case "path": VitPointPath.proc(name, yy, yyFull, outPath);
 				default: return;
 			}
 			//
@@ -159,7 +161,6 @@ class VitProject {
 				gmxDir = gmxNext;
 			}
 			//
-			var gmxItem = new SfGmx(single, gmxPath);
 			gmxDir.addChild(gmxItem);
 			//trace(pair.Value.resourcePath, single, chain);
 		}
