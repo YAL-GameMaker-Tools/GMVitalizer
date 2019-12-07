@@ -5,6 +5,7 @@ import yy.*;
 import sys.FileSystem;
 import sys.io.File;
 import tools.SfGmx;
+import vit.*;
 import yy.YyProject;
 
 /**
@@ -48,17 +49,19 @@ class VitProject {
 		Sys.println("Printing...");
 		var gmx = new SfGmx("assets"), q:SfGmx;
 		//{ prepare GMX
-		q = gmx.addTextChild("Configs");
+		q = gmx.addEmptyChild("Configs");
 		q.set("name", "configs");
 		q.addTextChild("Config", "Configs\\Default");
-		q = gmx.addTextChild("datafiles");
+		q = gmx.addEmptyChild("datafiles");
 		q.set("name", "datafiles");
-		gmx.addTextChild("NewExtensions");
+		q.setInt("number", 0);
+		gmx.addEmptyChild("NewExtensions");
 		function addCat(kind:String, label:String):SfGmx {
-			var q = gmx.addTextChild(kind);
+			var q = gmx.addEmptyChild(kind);
 			q.set("name", label);
 			return q;
 		}
+		addCat("sounds", "sound");
 		addCat("sprites", "sprites");
 		addCat("backgrounds", "background");
 		addCat("paths", "paths");
@@ -68,9 +71,10 @@ class VitProject {
 		addCat("objects", "objects");
 		addCat("timelines", "timelines");
 		addCat("rooms", "rooms");
-		gmx.addTextChild("constants");
-		gmx.addTextChild("help");
-		q = gmx.addTextChild("TutorialState");
+		q = gmx.addEmptyChild("constants");
+		q.setInt("number", 0);
+		gmx.addEmptyChild("help");
+		q = gmx.addEmptyChild("TutorialState");
 		q.addTextChild("IsTutorial", "0");
 		q.addTextChild("TutorialName", "");
 		q.addTextChild("TutorialPage", "0");
@@ -124,7 +128,7 @@ class VitProject {
 				case "script": {
 					var scr:YyScript = yy;
 					if (scr.IsCompatibility) return;
-					Sys.println('Processing $name...');
+					Sys.println('Converting $name...');
 					var gml = try {
 						File.getContent(Path.withExtension(yyFull, "gml"));
 					} catch (x:Dynamic) {
@@ -133,6 +137,8 @@ class VitProject {
 					}
 					File.saveContent(outPath, VitGML.proc(gml, name));
 				};
+				case "sprite": VitSprite.proc(yy, yyFull, outPath, name);
+				case "font": VitFont.proc(name, yy, yyFull, outPath);
 				default: return;
 			}
 			//
@@ -178,6 +184,7 @@ class VitProject {
 			}
 		}
 		printFolder(rootView, []);
+		Sys.println("Saving project...");
 		File.saveContent(to, gmx.toGmxString());
 	}
 	public static function proc(from:String, to:String) {

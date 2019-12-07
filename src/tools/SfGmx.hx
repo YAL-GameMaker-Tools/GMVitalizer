@@ -32,10 +32,22 @@ class SfGmx {
 	public inline function addChild(q:SfGmx):Void {
 		children.push(q);
 	}
-	public function addTextChild(name:String, ?value:String):SfGmx {
+	public function addTextChild(name:String, value:String):SfGmx {
 		var r = new SfGmx(name, value);
 		addChild(r);
 		return r;
+	}
+	public inline function addEmptyChild(name:String):SfGmx {
+		return addTextChild(name, null);
+	}
+	public inline function addBoolChild(name:String, value:Bool):SfGmx {
+		return addTextChild(name, value ? "-1" : "0");
+	}
+	public inline function addIntChild(name:String, value:Int):SfGmx {
+		return addTextChild(name, "" + value);
+	}
+	public inline function addFloatChild(name:String, value:Float):SfGmx {
+		return addTextChild(name, "" + value);
 	}
 	//
 	public inline function removeChild(q:SfGmx):Void {
@@ -88,6 +100,9 @@ class SfGmx {
 		if (!attrMap.exists(attr)) attrList.push(attr);
 		attrMap.set(attr, value);
 	}
+	public inline function setInt(attr:String, value:Int):Void {
+		set(attr, "" + value);
+	}
 	public inline function exists(attr:String):Bool {
 		return attrMap.exists(attr);
 	}
@@ -97,6 +112,9 @@ class SfGmx {
 			attrList.remove(attr);
 			return true;
 		} else return false;
+	}
+	public inline function keys():Array<String> {
+		return attrList.copy();
 	}
 	//
 	private function toStringRec(r:StringBuilder, t:String) {
