@@ -39,7 +39,11 @@ class VitSprite {
 			var q2:SfGmx;
 			var rel = '${name}_${index}.png';
 			var src = Path.join([baseDir, qf.compositeImage.FrameId + '.png']);
-			File.copy(src, Path.join([imgDir, rel]));
+			try {
+				File.copy(src, Path.join([imgDir, rel]));
+			} catch (x:Dynamic) {
+				Sys.println('Failed to copy frame #$index: $x');
+			}
 			q2 = q1.addTextChild("frame", 'images\\$rel');
 			q2.setInt("index", index++);
 		}
