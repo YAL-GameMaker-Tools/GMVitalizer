@@ -13,8 +13,10 @@ import yy.YyProject;
  * @author YellowAfterlife
  */
 class VitProject {
+	public static var current:VitProject;
 	var isOK = false;
-	var objectNames:Map<YyGUID, String> = new Map();
+	public var objectNames:Map<YyGUID, String> = new Map();
+	public var spriteNames:Map<YyGUID, String> = new Map();
 	var folders:Map<YyGUID, YyView> = new Map();
 	var assets:Map<YyGUID, YyProjectResource> = new Map();
 	var rootView:YyView = null;
@@ -39,6 +41,19 @@ class VitProject {
 				if (fd.isDefaultView) rootView = fd;
 			} else {
 				assets[id] = pair;
+				var tstore = switch (pair.Value.resourceType) {
+					case "GMObject": 1;
+					case "GMSprite": 2;
+					default: 0;
+				};
+				if (tstore > 0) {
+					var path = pair.Value.resourcePath;
+					var name = Path.withoutDirectory(Path.withoutExtension(path));
+					switch (tstore) {
+						case 1: objectNames[id] = name;
+						case 2: spriteNames[id] = name;
+					}
+				}
 			}
 		}
 		//
@@ -46,6 +61,7 @@ class VitProject {
 		isOK = true;
 	}
 	public function print(to:String) {
+		current = this;
 		Sys.println("Printing...");
 		var gmx = new SfGmx("assets"), q:SfGmx;
 		//{ prepare GMX
@@ -142,9 +158,10 @@ class VitProject {
 					File.saveContent(outPath, VitGML.proc(gml, name));
 				};
 				case "sprite": VitSprite.proc(yy, yyFull, outPath, name);
-				case "font": VitFont.proc(name, yy, yyFull, outPath);
-				case "path": VitPointPath.proc(name, yy, yyFull, outPath);
-				case "sound": VitSound.proc(name, yy, yyFull, outPath);
+				case "font":   VitFont.proc(name, yy, yyFull, outPath);
+				case "path":   VitPointPath.proc(name, yy, yyFull, outPath);
+				case "sound":  VitSound.proc(name, yy, yyFull, outPath);
+				case "object": VitObject.proc(name, yy, yyFull, outPath);
 				default: return;
 			}
 			//

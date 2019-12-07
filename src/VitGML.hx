@@ -146,11 +146,16 @@ class VitGML {
 							case "r".code: esc = "\r".code; note = "\\r";
 							case "n".code: esc = "\n".code; note = "\\n";
 							case "t".code: esc = "\t".code; note = "\\t";
+							case "\\".code: esc = "\\".code; note = "\\";
 							case "\r".code, "\n".code: esc = -1;
 							default: throw 'Escape character $c `'
 								+ String.fromCharCode(c) + "` is not supported.";
 						}
-						if (strQuote) {
+						if (strBuf == null) {
+							strBuf = new StringBuf();
+							strBuf.add('(""');
+							strQuote = false;
+						} else if (strQuote) {
 							strQuote = false;
 							strBuf.add('"');
 						}
