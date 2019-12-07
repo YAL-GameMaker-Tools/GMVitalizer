@@ -71,8 +71,8 @@ class VitProject {
 		addCat("objects", "objects");
 		addCat("timelines", "timelines");
 		addCat("rooms", "rooms");
-		q = gmx.addEmptyChild("constants");
-		q.setInt("number", 0);
+		var macros = gmx.addEmptyChild("constants");
+		macros.setInt("number", 0);
 		gmx.addEmptyChild("help");
 		q = gmx.addEmptyChild("TutorialState");
 		q.addTextChild("IsTutorial", "0");
@@ -184,6 +184,16 @@ class VitProject {
 			}
 		}
 		printFolder(rootView, []);
+		//
+		var defaultMacros = 0;
+		for (m in VitGML.macroList) {
+			if (m.config != null) continue;
+			var c = macros.addTextChild("constant", m.value);
+			c.set("name", m.name);
+			defaultMacros++;
+		}
+		macros.setInt("number", defaultMacros);
+		//
 		Sys.println("Saving project...");
 		File.saveContent(to, gmx.toGmxString());
 	}

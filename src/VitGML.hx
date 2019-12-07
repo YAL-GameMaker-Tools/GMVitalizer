@@ -9,6 +9,7 @@ import Ruleset;
  * @author YellowAfterlife
  */
 class VitGML {
+	public static var macroList:Array<GmlMacro> = [];
 	public static function proc(src:String, ctx:String):String {
 		var out = new StringBuf();
 		var pos = 0;
@@ -184,6 +185,53 @@ class VitGML {
 						start = pos;
 					}
 				};
+				case '#'.code: { // possibly macros or regions
+					if (!src.fastCodeAt(pos).isIdent0()) {
+						// not what we want
+					} else {
+						var np = src.skipIdent1(pos);
+						switch (src.substring(pos, np)) {
+							case "macro": {
+								var nameAt = src.skipSpace1(np);
+								pos = src.skipIdent1(nameAt);
+								var name = src.substring(nameAt, pos);
+								var config:String;
+								if (src.fastCodeAt(pos) == ":".code) {
+									config = name;
+									nameAt = ++pos;
+									pos = src.skipIdent1(pos);
+									name = src.substring(nameAt, pos);
+								} else config = null;
+								var valueAt = src.skipSpace1(pos);
+								pos = src.skipLine(pos);
+								var value = "";
+								while (src.fastCodeAt(pos - 1) == "\\".code) {
+									if (value != "") value += " ";
+									value += src.substring(valueAt, pos - 1);
+									if (src.fastCodeAt(pos) == "\r".code) pos++;
+									if (src.fastCodeAt(pos) == "\n".code) pos++;
+									valueAt = pos;
+									pos = src.skipLine(pos);
+								}
+								if (value != "") value += " ";
+								value += src.substring(valueAt, pos);
+								var m = new GmlMacro(name, value, config);
+								macroList.push(m);
+								flush(at);
+								out.add('//#macro ');
+								if (config != null) out.add('$config:');
+								out.add('$name $value');
+								start = pos;
+							};
+							case "region", "endregion": {
+								pos = src.skipLine(pos);
+								flush(at);
+								out.add("//");
+								start = pos;
+							};
+						}
+					}
+				};
 				case '"'.code: procString2(at);
 				case "[".code: { // possibly an array literal
 					var lp = at;
@@ -245,5 +293,15 @@ class VitGML {
 		}
 		flush(pos);
 		return out.toString();
+	}
+}
+class GmlMacro {
+	public var name:String;
+	public var value:String;
+	public var config:String;
+	public function new(name:String, value:String, ?config:String) {
+		this.name = name;
+		this.value = value;
+		this.config = config;
 	}
 }

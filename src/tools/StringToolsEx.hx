@@ -13,20 +13,17 @@ class StringToolsEx {
 	 * @return -1 if not matched, 
 	 */
 	public static function compareNs(source:String, pos:StringPos, against:String):StringPos {
-		inline function isSpace(c:Int):Bool {
-			return (c > 8 && c < 14) || c == 32;
-		}
 		var sp = pos;
 		var sl = source.length;
 		var ap = 0;
 		var al = against.length;
 		while (ap < al) {
 			var ac = against.fastCodeAt(ap++);
-			if (isSpace(ac)) continue;
+			if (inline isSpace1(ac)) continue;
 			var sc:Int = -1;
 			while (sp < sl) {
 				sc = source.fastCodeAt(sp++);
-				if (!isSpace(sc)) break;
+				if (!inline isSpace1(sc)) break;
 			}
 			//trace('sp=$sp/$sl, ap=$ap/$al, $sc<->$ac');
 			if (sc != ac) return -1;
@@ -61,6 +58,16 @@ class StringToolsEx {
 		return pos;
 	}
 	
+	public static inline function skipWhile(src:String, pos:StringPos, fn:StringSkipWhile):StringPos {
+		var len = src.length;
+		while (pos < len) {
+			if (fn(src.fastCodeAt(pos), pos)) {
+				pos++;
+			} else break;
+		}
+		return pos;
+	}
+	
 	/** Skips until EOL (not skipping EOL itself) */
 	public static function skipLine(src:String, pos:StringPos):StringPos {
 		var len = src.length;
@@ -83,6 +90,16 @@ class StringToolsEx {
 			}
 		}
 		return pos;
+	}
+	
+	public static function skipIdent1(src:String, pos:StringPos):StringPos {
+		return skipWhile(src, pos, (c, _) -> inline c.isIdent1());
+	}
+	public static function skipSpace0(src:String, pos:StringPos):StringPos {
+		return skipWhile(src, pos, (c, _) -> inline c.isSpace0());
+	}
+	public static function skipSpace1(src:String, pos:StringPos):StringPos {
+		return skipWhile(src, pos, (c, _) -> inline c.isSpace1());
 	}
 	
 	/**
@@ -119,15 +136,30 @@ class StringToolsEx {
 		return pos;
 	}
 	
-	public static function isIdent0(c:Int):Bool {
+	/** includes spaces, tabs, linebreaks */
+	public static function isSpace0(c:CharCode):Bool {
+		return (c > 8 && c < 14) || c == 32;
+	}
+	
+	/** includes spaces and tabs */
+	public static function isSpace1(c:CharCode):Bool {
+		return c == " ".code || c == "\t".code;
+	}
+	
+	/** includes _, a-z, A-Z */
+	public static function isIdent0(c:CharCode):Bool {
 		return c == "_".code
 			|| c >= "a".code && c <= "z".code
 			|| c >= "A".code && c <= "Z".code;
 	}
-	public static function isIdent1(c:Int):Bool {
+	
+	/** includes _, a-z, A-Z, 0-9 */
+	public static function isIdent1(c:CharCode):Bool {
 		return c == "_".code
 			|| c >= "0".code && c <= "9".code
 			|| c >= "a".code && c <= "z".code
 			|| c >= "A".code && c <= "Z".code;
 	}
 }
+
+typedef StringSkipWhile = (c:CharCode, p:StringPos)->Bool;
