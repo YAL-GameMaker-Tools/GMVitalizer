@@ -108,7 +108,10 @@ class VitProject {
 			var path = pair.Value.resourcePath;
 			var name = Path.withoutDirectory(Path.withoutExtension(path));
 			//
-			var gmxPath = '$plural\\$name';
+			var gmxPath = switch (single) {
+				case "sound", "background": '$single\\$name';
+				default: '$plural\\$name';
+			};
 			switch (single) {
 				case "script": gmxPath += ".gml";
 				case "shader": gmxPath += ".shader";
@@ -141,6 +144,7 @@ class VitProject {
 				case "sprite": VitSprite.proc(yy, yyFull, outPath, name);
 				case "font": VitFont.proc(name, yy, yyFull, outPath);
 				case "path": VitPointPath.proc(name, yy, yyFull, outPath);
+				case "sound": VitSound.proc(name, yy, yyFull, outPath);
 				default: return;
 			}
 			//
