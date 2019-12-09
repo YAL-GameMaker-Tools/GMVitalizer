@@ -5,7 +5,6 @@ import Ruleset;
 
 /**
  * GMS2-GML -> GMS1-GML conversion
- * Supporting ternary operators without rewriting this to be an expression builder might be messy.
  * @author YellowAfterlife
  */
 class VitGML {
@@ -122,6 +121,24 @@ class VitGML {
 		flush(pos);
 		return out.toString();
 	}
+	
+	public static function fixTernaryOperators():Void {
+		/*
+		Detection: Upon encountering a `?`,
+		we must backtrack to find the start of the expression (`=:[(`, some ops...) 
+		and also forward-track to find the end of expression (`)];`, what else)
+		
+		Implementation:
+		a ? b : c -> tern_get(a && tern_set(b) || tern_set(c))
+		where
+		tern_set(x) => global.tern_value = x; return true;
+		tern_get(_) => return global.tern_value;
+		
+		Specifics: Writing a good expression skipper is inherently unexciting, maybe adapt one
+		from GMEdit's linter or something.
+		*/
+	}
+	
 	public static function proc(src:String, ctx:String):String {
 		src = fixVarDecl(src, ctx);
 		var out = new StringBuf();

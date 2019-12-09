@@ -34,6 +34,15 @@ remap __view_set( e__VW.WPort, $1, $2 ) -> view_wport[$1] = $2
 remap __view_set( e__VW.SurfaceID, $1, $2 ) -> view_surface_id[$1] = $2
 //}
 
+//{ Simple camera
+remap view_camera[$1] = $2 -> view_set_camera($1, $2)
+remap view_camera[$1] -> /*view_camera*/($1)
+remap camera_get_view_x($1) -> view_xview[$1]
+remap camera_get_view_y($1) -> view_yview[$1]
+remap camera_get_view_width($1) -> view_wview[$1]
+remap camera_get_view_height($1) -> view_hview[$1]
+//}
+
 //{ gpu
 remap gpu_set_fog -> d3d_set_fog
 remap gpu_set_blendmode -> draw_set_blend_mode
