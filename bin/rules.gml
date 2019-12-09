@@ -10,10 +10,10 @@ remap __view_get( e__VW.HSpeed, $1 ) -> view_hspeed[$1]
 remap __view_get( e__VW.VSpeed, $1 ) -> view_vspeed[$1]
 remap __view_get( e__VW.Object, $1 ) -> view_object[$1]
 remap __view_get( e__VW.Visible, $1 ) -> view_object[$1]
-remap __view_get( e__VW.XView, $1 ) -> view_xview[$1]
-remap __view_get( e__VW.YView, $1 ) -> view_yview[$1]
-remap __view_get( e__VW.HView, $1 ) -> view_hview[$1]
-remap __view_get( e__VW.WView, $1 ) -> view_wview[$1]
+remap __view_get( e__VW.XPort, $1 ) -> view_xport[$1]
+remap __view_get( e__VW.YPort, $1 ) -> view_yport[$1]
+remap __view_get( e__VW.HPort, $1 ) -> view_hport[$1]
+remap __view_get( e__VW.WPort, $1 ) -> view_wport[$1]
 remap __view_get( e__VW.SurfaceID, $1 ) -> view_surface_id[$1]
 //
 remap __view_set( e__VW.XView, $1, $2 ) -> view_xview[$1] = $2
@@ -27,10 +27,10 @@ remap __view_set( e__VW.HSpeed, $1, $2 ) -> view_hspeed[$1] = $2
 remap __view_set( e__VW.VSpeed, $1, $2 ) -> view_vspeed[$1] = $2
 remap __view_set( e__VW.Object, $1, $2 ) -> view_object[$1] = $2
 remap __view_set( e__VW.Visible, $1, $2 ) -> view_object[$1] = $2
-remap __view_set( e__VW.XView, $1, $2 ) -> view_xview[$1] = $2
-remap __view_set( e__VW.YView, $1, $2 ) -> view_yview[$1] = $2
-remap __view_set( e__VW.HView, $1, $2 ) -> view_hview[$1] = $2
-remap __view_set( e__VW.WView, $1, $2 ) -> view_wview[$1] = $2
+remap __view_set( e__VW.XPort, $1, $2 ) -> view_xport[$1] = $2
+remap __view_set( e__VW.YPort, $1, $2 ) -> view_yport[$1] = $2
+remap __view_set( e__VW.HPort, $1, $2 ) -> view_hport[$1] = $2
+remap __view_set( e__VW.WPort, $1, $2 ) -> view_wport[$1] = $2
 remap __view_set( e__VW.SurfaceID, $1, $2 ) -> view_surface_id[$1] = $2
 //}
 
