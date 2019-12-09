@@ -10,7 +10,120 @@ import Ruleset;
  */
 class VitGML {
 	public static var macroList:Array<GmlMacro> = [];
+	/**
+	 * Doing `var a = 1\nb = 2` throws an ambiguity error in GM:S
+	 * (because you used to be able to `var a b` instead of `var a, b` in GM8)
+	 * 
+	 */
+	static function fixVarDecl(src:String, ctx:String):String {
+		var out = new StringBuf();
+		var pos = 0;
+		var len = src.length;
+		var start = 0;
+		
+		#if !debug inline #end
+		function flush(till:Int):Void {
+			out.addSub(src, start, till - start);
+		}
+		
+		var isInVarDecl = false;
+		var commentAt = -1;
+		while (pos < len) {
+			var at = pos;
+			var c = src.fastCodeAt(pos++);
+			switch (c) {
+				case "\r".code, "\n".code: {
+					if (isInVarDecl) {
+						// no need to worry about semicolons if not followed by an identifier
+						var np = pos;
+						while (np < len) {
+							c = src.fastCodeAt(np++);
+							switch (c) {
+								case " ".code, "\t".code, "\r".code, "\n".code: continue;
+								case "/".code: { // comments
+									if (np < len) switch (src.fastCodeAt(np)) {
+										case "/".code: np = src.skipLine(np + 1);
+										case "*".code: np = src.skipComment(np + 1);
+									}
+								};
+								default: {
+									if (!c.isIdent0()) {
+										isInVarDecl = false;
+									}
+									break;
+								}
+							}
+						}
+					}
+					if (isInVarDecl) {
+						var lp = commentAt >= 0 ? commentAt : at;
+						var needsSemico = false;
+						while (--lp >= 0) {
+							var c = src.fastCodeAt(lp);
+							switch (c) {
+								case " ".code, "\t".code: continue;
+								case ",".code, "[".code, "(".code,
+									// operators:
+									"+".code, "-".code, "*".code, "/".code, "%".code,
+									"<".code, ">".code, "=".code, "!".code,
+									"|".code, "&".code, "^".code
+								: break;
+								case _ if (c.isIdent1()): {
+									var np = lp;
+									while (--np >= 0) {
+										c = src.fastCodeAt(np);
+										if (!c.isIdent1()) break;
+									}
+									var id = src.substring(np + 1, lp + 1);
+									switch (id) {
+										case "and", "or", "xor", "not", "var": {};
+										default: needsSemico = true;
+									}
+									break;
+								};
+								default: needsSemico = true; break;
+							}
+						} // backtracking to first meaningful character
+						if (needsSemico) {
+							flush(lp + 1);
+							out.addChar(";".code);
+							start = lp + 1;
+						}
+						isInVarDecl = false;
+					}
+					commentAt = -1;
+				};
+				case ";".code: isInVarDecl = false;
+				case "/".code: { // comments
+					if (pos < len) switch (src.fastCodeAt(pos)) {
+						case "/".code: {
+							commentAt = at;
+							pos = src.skipLine(pos + 1);
+						};
+						case "*".code: pos = src.skipComment(pos + 1);
+					}
+				};
+				case '@'.code: { // possibly string literals
+					c = src.fastCodeAt(pos++);
+					if (c == '"'.code || c == "'".code) { // it's them
+						pos = src.skipString1(pos, c);
+					}
+				};
+				case '"'.code: pos = src.skipString2(pos);
+				case _ if (c.isIdent0()): {
+					pos = src.skipIdent1(pos);
+					var id = src.substring(at, pos);
+					if (id == "var") isInVarDecl = true;
+				};
+			}
+		}
+		
+		if (start == 0) return src;
+		flush(pos);
+		return out.toString();
+	}
 	public static function proc(src:String, ctx:String):String {
+		src = fixVarDecl(src, ctx);
 		var out = new StringBuf();
 		var pos = 0;
 		var len = src.length;
@@ -297,10 +410,7 @@ class VitGML {
 						}
 					}
 				};
-				case _ if (c == "_".code
-					|| c >= "a".code && c <= "z".code 
-					|| c >= "A".code && c <= "Z".code 
-				): {
+				case _ if (c.isIdent0()): {
 					while (pos < len) {
 						c = src.fastCodeAt(pos);
 						if (c == "_".code
@@ -327,6 +437,7 @@ class VitGML {
 				};
 			}
 		}
+		if (start == 0) return src;
 		flush(pos);
 		return out.toString();
 	}
