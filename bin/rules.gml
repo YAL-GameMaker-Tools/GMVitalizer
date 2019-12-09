@@ -46,6 +46,10 @@ remap gpu_set_colorwriteenable -> draw_set_color_write_enable
 remap gpu_set_alphatestenable -> draw_set_alpha_test
 //}
 
+//{ instances
+remap instance_destroy($1, $2) -> instance_destroy_ext($1, $2)
+//}
+
 //{ misc
 remap string_hash_to_newline($1) -> $1
 //}

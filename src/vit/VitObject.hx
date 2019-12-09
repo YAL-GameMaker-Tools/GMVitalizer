@@ -47,12 +47,91 @@ class VitObject {
 		q0.addTextChild("maskName", nameOf(pj.spriteNames[q.maskSpriteId]));
 		q1 = q0.addEmptyChild("events");
 		var inDir = Path.directory(inPath);
-		for (e in q.eventList) {
+		//
+		var eventList:Array<VitObjectEvent> = [];
+		var cleanupCode:String = null;
+		for (qe in q.eventList) {
+			var etype = qe.eventtype;
+			var enumb = qe.enumb;
+			var ecobj = qe.collisionObjectId;
+			//
+			var epath = eventTypeNames[etype];
+			if (etype == 4) { // collision
+				epath += "_" + qe.id;
+			} else epath += "_" + enumb;
+			var efull = Path.join([inDir, epath + ".gml"]);
+			//
+			var ecode = try {
+				File.getContent(efull);
+			} catch (x:Dynamic) "";
+			ecode = VitGML.proc(ecode, '$name:$epath');
+			//
+			if (etype == 12 && enumb == 0) {
+				cleanupCode = ecode;
+				continue;
+			}
+			//
+			eventList.push({
+				type: etype,
+				numb: etype != 4 ? enumb : null,
+				name: etype == 4 ? nameOf(pj.objectNames[ecobj]) : null,
+				code: ecode,
+			});
+		}
+		
+		// Fake cleanup events
+		if (cleanupCode != null) {
+			//
+			var cleanupGotHeader = false;
+			cleanupCode = ~/^\/\/\/ ?(.*)/.map(cleanupCode, function(rx:EReg) {
+				cleanupGotHeader = true;
+				return " [Cleanup] " + rx.matched(1);
+			});
+			if (!cleanupGotHeader) cleanupCode = "/// [Cleanup]\r\n" + cleanupCode;
+			
+			// It seems like the most useless event you can make is a high-numbered alarm,
+			// but this will not work on HTML5. Any other ideas?
+			var fakeCleanupType = 2; // Alarm
+			var fakeCleanupNumb = 99;
+			eventList.push({
+				type: fakeCleanupType,
+				numb: fakeCleanupNumb,
+				name: null,
+				code: cleanupCode,
+			});
+			for (cleanupPass in 0 ... 2) {
+				var isRoomEnd = cleanupPass > 0;
+				var etype = isRoomEnd ? 7 : 1;
+				var enumb = isRoomEnd ? 1 : 0;
+				var e:VitObjectEvent = eventList.filter(function(e:VitObjectEvent) {
+					return e.type == etype && e.numb == enumb;
+				})[0];
+				
+				// 
+				if (e == null) {
+					e = {
+						type: etype,
+						numb: enumb,
+						name: null,
+						code: "event_inherited();"
+					};
+					eventList.push(e);
+				}
+				
+				// 1. Do not run inherited cleanup
+				// (as that might destroy structures that our destroy/room end wants)
+				// 2. Do not cleanup on room end if we're persistent and will stick around
+				e.code += '\r\nif (object_index == $name' // 1
+					+ (isRoomEnd ? ' && !persistent' : '') // 2
+					+ ') event_perform($fakeCleanupType, $fakeCleanupNumb); // cleanup';
+			};
+		}
+		//
+		for (e in eventList) {
 			var q2 = q1.addEmptyChild("event");
-			q2.setInt("eventtype", e.eventtype);
-			if (e.eventtype == 4) {
-				q2.set("ename", nameOf(pj.objectNames[e.collisionObjectId]));
-			} else q2.setInt("enumb", e.enumb);
+			q2.setInt("eventtype", e.type);
+			if (e.name != null) q2.set("ename", e.name);
+			if (e.numb != null) q2.setInt("enumb", e.numb);
 			var q3 = q2.addEmptyChild("action");
 			q3.addIntChild("libid", 1);
 			q3.addIntChild("id", 603);
@@ -68,16 +147,8 @@ class VitObject {
 			q3.addIntChild("isnot", 0);
 			var q4 = q3.addEmptyChild("arguments");
 			var q5 = q4.addEmptyChild("argument");
-			q5.addIntChild("kind", 0);
-			//
-			var epath = eventTypeNames[e.eventtype];
-			if (e.eventtype == 4) {
-				epath += "_" + e.id;
-			} else epath += "_" + e.enumb;
-			var efull = Path.join([inDir, epath + ".gml"]);
-			var gml = File.getContent(efull);
-			gml = VitGML.proc(gml, epath);
-			q5.addTextChild("string", gml);
+			q5.addIntChild("kind", 1);
+			q5.addTextChild("string", e.code);
 		}
 		q0.addBoolChild("PhysicsObject", q.physicsObject);
 		q0.addBoolChild("PhysicsObjectSensor", q.physicsSensor);
@@ -98,3 +169,9 @@ class VitObject {
 		File.saveContent(outPath + '.object.gmx', q0.toGmxString());
 	}
 }
+typedef VitObjectEvent = {
+	type:Int,
+	numb:Int,
+	name:String,
+	code:String,
+};
