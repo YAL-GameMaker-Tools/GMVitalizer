@@ -1,4 +1,5 @@
 /bin/*
 !/bin/rules.gml
+!/bin/compatibility
 out/
 test.bat

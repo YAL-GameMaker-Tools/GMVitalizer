@@ -50,6 +50,13 @@ class SfGmx {
 		return addTextChild(name, "" + value);
 	}
 	//
+	public function insertBefore(newNode:SfGmx, refNode:SfGmx) {
+		var pos = children.indexOf(refNode);
+		if (pos >= 0) {
+			children.insert(pos, newNode);
+		} else children.push(newNode);
+	}
+	//
 	public inline function removeChild(q:SfGmx):Void {
 		children.remove(q);
 	}

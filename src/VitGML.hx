@@ -24,6 +24,7 @@ class VitGML {
 		#if !debug inline #end
 		function procRemaps(startWord:String, at:Int, remaps:Array<RemapRule>) {
 			var debug = false;
+			var foundRemap = false;
 			for (remap in remaps) {
 				var caps = null;
 				var np = pos;
@@ -34,7 +35,11 @@ class VitGML {
 				var debug_eol:Int = -1;
 				if (debug) {
 					debug_eol = src.indexOf("\n", pos);
-					if (debug_eol < 0) debug_eol = len;
+					if (debug_eol < 0) {
+						debug_eol = len;
+					} else if (src.fastCodeAt(debug_eol - 1) == "\r".code) {
+						debug_eol--;
+					}
 					trace("match", inputs);
 					trace("against", src.substring(pos, debug_eol));
 				}
@@ -83,28 +88,47 @@ class VitGML {
 										iid++;
 										np = np1;
 										break;
-									} else np++;
+									} else if (depth == 0) {
+										np++;
+									} else {
+										// getting to a closing bracket without having gotten
+										// the arguments and alike
+										break;
+									}
 								} else np++;
 							}
 						};
 					}
 				} // while (iid)
-				if (debug) trace(np, iid, length);
+				if (debug) {
+					trace('np=$np, id=$iid/$length');
+				}
 				if (length > 0 && (np < 0 || iid < length)) continue;
 				// process code inside captures (to allow nesting):
 				if (caps != null) for (i in 0 ... caps.length) {
 					if (caps[i] != null) caps[i] = proc(caps[i].trim(), ctx);
 				}
+				//
+				if (!remap.isUsed) {
+					remap.isUsed = true;
+					for (imp in remap.dependants) imp.include();
+				}
 				// flush and print rule output:
 				flush(at);
+				if (debug) {
+					trace("replace", remap.outputs, caps);
+					Sys.getChar(true);
+				}
 				for (item in remap.outputs) switch (item) {
 					case Text(s): out.add(s);
 					case Capture(i): out.add(caps[i]);
 				}
 				pos = np;
 				start = np;
+				foundRemap = true;
 				break;
 			} // for in remaps
+			return foundRemap;
 		}
 		
 		#if !debug inline #end
@@ -289,7 +313,14 @@ class VitGML {
 					}
 					var id = src.substring(at, pos);
 					var remaps = Ruleset.remaps[id];
-					if (remaps != null) procRemaps(id, at, remaps);
+					var foundRemap:Bool;
+					if (remaps != null) {
+						foundRemap = procRemaps(id, at, remaps);
+					} else foundRemap = false;
+					if (!foundRemap) {
+						var arr = Ruleset.importsByIdent[id];
+						if (arr != null) for (imp in arr) imp.include();
+					}
 				};
 				default: {
 					

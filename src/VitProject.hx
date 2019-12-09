@@ -117,6 +117,28 @@ class VitProject {
 		ensureDir('$dir/datafiles');
 		ensureDir('$dir/extensions');
 		//}
+		function addAssetNode(chain:Array<String>, gmxItem:SfGmx, plural:String, before:Bool = false):Void {
+			var gmxDir = gmx;
+			for (part in chain) {
+				var gmxNext:SfGmx = null;
+				for (gmxChild in gmxDir.children) {
+					if (gmxChild.get("name") == part) {
+						gmxNext = gmxChild;
+						break;
+					}
+				}
+				if (gmxNext == null) {
+					gmxNext = new SfGmx(plural);
+					gmxNext.set("name", part);
+					if (before) {
+						gmxDir.insertBefore(gmxNext, gmxDir.children[0]);
+					} else gmxDir.addChild(gmxNext);
+				}
+				gmxDir = gmxNext;
+			}
+			//
+			gmxDir.addChild(gmxItem);
+		}
 		function printAsset(pair:YyProjectResource, chain:Array<String>):Void {
 			var yyType = pair.Value.resourceType;
 			var single = yyType.substring(2).toLowerCase();
@@ -165,24 +187,7 @@ class VitProject {
 				default: return;
 			}
 			//
-			var gmxDir = gmx;
-			for (part in chain) {
-				var gmxNext:SfGmx = null;
-				for (gmxChild in gmxDir.children) {
-					if (gmxChild.get("name") == part) {
-						gmxNext = gmxChild;
-						break;
-					}
-				}
-				if (gmxNext == null) {
-					gmxNext = new SfGmx(plural);
-					gmxNext.set("name", part);
-					gmxDir.addChild(gmxNext);
-				}
-				gmxDir = gmxNext;
-			}
-			//
-			gmxDir.addChild(gmxItem);
+			addAssetNode(chain, gmxItem, plural);
 			//trace(pair.Value.resourcePath, single, chain);
 		}
 		function printFolder(fd:YyView, chain:Array<String>):Void {
@@ -206,6 +211,29 @@ class VitProject {
 			}
 		}
 		printFolder(rootView, []);
+		//
+		//trace(Ruleset.importList.length); Sys.getChar(true);
+		for (imp in Ruleset.importList) {
+			var name = imp.name;
+			Sys.println('Importing $name...');
+			switch (imp.kind) {
+				case "script": {
+					File.copy(imp.path, '$dir\\scripts\\$name.gml');
+					addAssetNode(
+						["scripts", "GMS2 compatibility"],
+						new SfGmx("script", 'scripts\\$name.gml'),
+						"scripts", true);
+				};
+				case "object": {
+					File.copy(imp.path, '$dir\\objects\\$name.object.gmx');
+					addAssetNode(
+						["objects", "GMS2 compatibility"],
+						new SfGmx("object", 'objects\\$name'),
+						"objects", true);
+				};
+				default: Sys.println('Can\'t import ${imp.kind} yet (for $name)');
+			}
+		}
 		//
 		var defaultMacros = 0;
 		for (m in VitGML.macroList) {
