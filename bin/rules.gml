@@ -57,8 +57,13 @@ remap gpu_set_alphatestenable -> draw_set_alpha_test
 
 //{ instances
 remap instance_destroy($1, $2) -> instance_destroy_ext($1, $2)
+import obj_gmv_blank if instance_create_layer or instance_create_depth
 //}
 
 //{ misc
 remap string_hash_to_newline($1) -> $1
+//}
+
+//{ layers
+import obj_gmv_layer;
 //}
