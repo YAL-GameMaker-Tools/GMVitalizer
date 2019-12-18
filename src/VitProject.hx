@@ -184,6 +184,18 @@ class VitProject {
 				case "path":   VitPointPath.proc(name, yy, yyFull, outPath);
 				case "sound":  VitSound.proc(name, yy, yyFull, outPath);
 				case "object": VitObject.proc(name, yy, yyFull, outPath);
+				case "shader": {
+					var sh:YyShader = yy;
+					var fsh = File.getContent(Path.withExtension(yyFull, "fsh"));
+					var vsh = File.getContent(Path.withExtension(yyFull, "vsh"));
+					var m = "\r\n//######################_==_YOYO_SHADER_MARKER_==_######################@~";
+					File.saveContent(outPath, vsh + m + fsh);
+					gmxItem.set("type", switch (sh.type) {
+						case 1: "GLSLES";
+						case 4: "HLSL11";
+						default: "GLSL";
+					});
+				};
 				default: return;
 			}
 			//
