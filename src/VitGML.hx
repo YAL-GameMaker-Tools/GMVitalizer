@@ -422,7 +422,7 @@ class VitGML {
 						}
 						if (pos < len) {
 							flush(at);
-							out.add(proc("array_literal(" + src.substring(at + 1, pos) + ")", ctx));
+							out.add(proc("gmv_array(" + src.substring(at + 1, pos) + ")", ctx));
 							start = ++pos;
 						}
 					}
