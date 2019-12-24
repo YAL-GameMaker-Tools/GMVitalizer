@@ -220,10 +220,10 @@ class VitProject {
 					}
 					File.saveContent(outPath, VitGML.proc(gml, name));
 				};
-				case "sprite": //   VitSprite.proc(name, yy, yyFull, outPath);
-				case "font":   //     VitFont.proc(name, yy, yyFull, outPath);
-				case "path":   //VitPointPath.proc(name, yy, yyFull, outPath);
-				case "sound":  //    VitSound.proc(name, yy, yyFull, outPath);
+				case "sprite":    VitSprite.proc(name, yy, yyFull, outPath);
+				case "font":        VitFont.proc(name, yy, yyFull, outPath);
+				case "path":   VitPointPath.proc(name, yy, yyFull, outPath);
+				case "sound":      VitSound.proc(name, yy, yyFull, outPath);
 				case "object":    VitObject.proc(name, yy, yyFull, outPath);
 				case "room":        VitRoom.proc(name, yy, yyFull, outPath);
 				case "background": {
