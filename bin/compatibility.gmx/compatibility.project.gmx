@@ -42,6 +42,10 @@
       <scripts name="Tilemap">
         <script>scripts\layer_tilemap_get_id.gml</script>
         <script>scripts\layer_tilemap_create.gml</script>
+        <script>scripts\tilemap_get_cell_x_at_pixel.gml</script>
+        <script>scripts\tilemap_get_cell_y_at_pixel.gml</script>
+        <script>scripts\tilemap_get.gml</script>
+        <script>scripts\tilemap_set.gml</script>
       </scripts>
       <scripts name="Background">
         <script>scripts\layer_background_create.gml</script>
