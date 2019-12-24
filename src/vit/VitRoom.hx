@@ -7,6 +7,7 @@ import yy.*;
 import tools.StringBuilder;
 import yy.YyRoom;
 import tools.SfGmx;
+import Ruleset;
 
 /**
  * ...
@@ -96,9 +97,23 @@ class VitRoom {
 		//
 		var rInsts = r.addEmptyChild("instances");
 		var rTiles = r.addEmptyChild("tiles");
-		var cc2 = new StringBuilder();
-		var cc3 = new StringBuilder();
+		{ // add the "layer init" instance
+			Ruleset.includeIdent("obj_gmv_room_init");
+			var ri = rInsts.addEmptyChild("instance");
+			ri.set("objName", "obj_gmv_room_init");
+			ri.set("x", "obj_gmv_room_init");
+			ri.setFloat("x", -100);
+			ri.setFloat("y", 100);
+			ri.setFloat("scaleX", 1);
+			ri.setFloat("scaleY", 1);
+			ri.set("name", "__gmv_room_init_" + name);
+			ri.set("code", "");
+			ri.set("colour", "4294967295");
+			ri.setFloat("rotation", 0);
+		};
+		//
 		var instMap = new Map<YyGUID, YyRoomInstance>();
+		var instGmx = new Map<YyGUID, SfGmx>();
 		var vl:String = null, vb:String = null;
 		function printLayerRec(l:YyRoomLayer):Void {
 			if (l.modelName == "GMRLayer") {
@@ -117,20 +132,29 @@ class VitRoom {
 					Ruleset.includeIdent("obj_gmv_blank");
 					if (l.instances.length > 0) Ruleset.includeIdent("gmv_instance_prepare");
 					for (o in l.instances) {
+						var objName = pj.objectNames[o.objId];
+						if (objName == null) continue;
 						instMap.set(o.id, o);
-						var ri:SfGmx = rInsts.addEmptyChild("instance");
+						var ri:SfGmx = new SfGmx("instance");
+						ri.set("objName", objName);
 						ri.setFloat("x", o.x);
 						ri.setFloat("y", o.y);
-						ri.set("objName", "obj_gmv_blank");
 						ri.setFloat("scaleX", o.scaleX);
 						ri.setFloat("scaleY", o.scaleY);
 						ri.set("name", o.name);
-						ri.set("code", "");
+						var occ = "";
+						if (o.creationCodeFile != "") try {
+							occ = File.getContent(inDir + "/" + o.creationCodeFile);
+							if (occ != "") {
+								occ = StringTools.replace(occ, "\t", "    ");
+							}
+						} catch (_:Dynamic) {};
+						ri.set("code", occ);
 						ri.setInt("colour", o.colour.Value);
 						ri.setFloat("rotation", o.rotation);
+						instGmx[o.id] = ri;
 						//
-						cc.addFormat("gmv_instance_prepare(%s, %s, %d);\r\n",
-							o.name, pj.objectNames[o.objId], lz);
+						cc.addFormat("%s.depth = %d;\r\n", o.name, lz);
 					}
 				};
 				case "GMRBackgroundLayer": {
@@ -206,35 +230,17 @@ class VitRoom {
 		for (oi in q.instanceCreationOrderIDs) {
 			var o = instMap[oi];
 			if (o == null) continue;
-			//
-			cc2.addFormat("with (%s) event_perform(ev_create, 0);\r\n", o.name);
-			//
-			if (o.creationCodeFile != "") try {
-				var occ = File.getContent(inDir + "/" + o.creationCodeFile);
-				if (occ != "") {
-					occ = StringTools.replace(occ, "\t", "    ");
-					occ = StringTools.replace(occ, "\r\n", "\r\n    ");
-					cc3.addFormat("with (%s) {\r\n    %s\r\n}\r\n", o.name, occ);
-				}
-			} catch (_:Dynamic) {};
+			rInsts.addChild(instGmx[oi]);
 		}
 		//
 		var rccFinal = try {
 			File.getContent('$inDir/RoomCreationCode.gml');
 		} catch (_:Dynamic) null;
-		if (cc2.length > 0) {
-			cc.add("// Create events:\r\n");
-			cc.add(cc2.toString());
-		}
-		if (cc3.length > 0) {
-			cc.add("// Instance Creation Code:\r\n");
-			cc.add(cc3.toString());
-		}
-		if (rccFinal != null && rccFinal.length > 0) {
-			cc.add("// Room Creation Code:\r\n");
-			cc.add(rccFinal);
-		}
-		rccNode.text = cc.toString();
+		rccNode.text = rccFinal;
+		//
+		var imp = new ImportRule("gmv_room_init_" + name, null, "script");
+		imp.data = cc.toString();
+		Ruleset.importList.push(imp);
 		//
 		File.saveContent('$outPath.room.gmx', r.toGmxString());
 	}

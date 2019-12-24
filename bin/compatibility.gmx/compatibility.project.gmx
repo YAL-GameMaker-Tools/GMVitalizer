@@ -54,6 +54,7 @@
     <object>objects\obj_gmv_layer_element</object>
     <object>objects\obj_gmv_layer_tilemap</object>
     <object>objects\obj_gmv_layer_background</object>
+    <object>objects\obj_gmv_room_init</object>
   </objects>
   <rooms name="rooms">
     <room>rooms\rm_gmv_test</room>
