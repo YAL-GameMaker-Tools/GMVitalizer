@@ -137,8 +137,16 @@ class VitRoom {
 						instMap.set(o.id, o);
 						var ri:SfGmx = new SfGmx("instance");
 						ri.set("objName", objName);
-						ri.setFloat("x", o.x);
-						ri.setFloat("y", o.y);
+						if (o.x % 1 != 0) {
+							var rx = Math.round(o.x);
+							ri.setFloat("x", rx);
+							cc.addFormat("%s.x += %f;\r\n", o.name, o.x - rx);
+						} else ri.setFloat("x", o.x);
+						if (o.y % 1 != 0) {
+							var ry = Math.round(o.y);
+							ri.setFloat("y", ry);
+							cc.addFormat("%s.y += %f;\r\n", o.name, o.y - ry);
+						} else ri.setFloat("y", o.y);
 						ri.setFloat("scaleX", o.scaleX);
 						ri.setFloat("scaleY", o.scaleY);
 						ri.set("name", o.name);
