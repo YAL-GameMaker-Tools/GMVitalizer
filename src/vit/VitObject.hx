@@ -102,7 +102,7 @@ class VitObject {
 			for (cleanupPass in 0 ... 2) {
 				var isRoomEnd = cleanupPass > 0;
 				var etype = isRoomEnd ? 7 : 1;
-				var enumb = isRoomEnd ? 1 : 0;
+				var enumb = isRoomEnd ? 5 : 0;
 				var e:VitObjectEvent = eventList.filter(function(e:VitObjectEvent) {
 					return e.type == etype && e.numb == enumb;
 				})[0];

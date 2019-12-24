@@ -65,5 +65,5 @@ remap string_hash_to_newline($1) -> $1
 //}
 
 //{ layers
-import obj_gmv_layer;
+
 //}

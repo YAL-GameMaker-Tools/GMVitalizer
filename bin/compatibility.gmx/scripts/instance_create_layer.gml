@@ -14,3 +14,4 @@ if (l_layer) with (l_layer) {
 	}
 }
 show_error("Couldn't find layer `" + string(argument2) + "`", true);
+return noone;

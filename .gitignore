@@ -1,6 +1,9 @@
 /bin/*
 !/bin/rules.gml
 !/bin/compatibility
+!/bin/compatibility.gmx
+/bin/compatibility.gmx/#backups
+/bin/compatibility.gmx/Configs/Default
 /bin/compatibility/$.gml
 out/
 test.bat

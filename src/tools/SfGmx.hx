@@ -110,6 +110,9 @@ class SfGmx {
 	public inline function setInt(attr:String, value:Int):Void {
 		set(attr, "" + value);
 	}
+	public inline function setFloat(attr:String, value:Float):Void {
+		set(attr, "" + value);
+	}
 	public inline function exists(attr:String):Bool {
 		return attrMap.exists(attr);
 	}

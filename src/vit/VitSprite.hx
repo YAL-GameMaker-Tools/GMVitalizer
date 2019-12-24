@@ -9,7 +9,7 @@ import tools.SfGmx;
  * @author YellowAfterlife
  */
 class VitSprite {
-	public static function proc(q:YySprite, inPath:String, outPath:String, name:String) {
+	public static function proc(name:String, q:YySprite, inPath:String, outPath:String) {
 		Sys.println('Converting $name...');
 		var q0 = new SfGmx("sprite");
 		var q1:SfGmx;

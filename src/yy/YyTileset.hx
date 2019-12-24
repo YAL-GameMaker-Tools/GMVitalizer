@@ -4,7 +4,7 @@ package yy;
  * @author YellowAfterlife
  */
 typedef YyTileset = {
-	id:GUID,
+	id:YyGUID,
 	modelName:String,
 	mvc:String,
 	name:String,
@@ -13,20 +13,26 @@ typedef YyTileset = {
 		SerialiseData:Any,
 		SerialiseHeight:Int,
 		SerialiseWidth:Int,
-		TileSerialiseData:Array<Any>
+		TileSerialiseData:Array<Int>
 	},
 	out_columns:Int,
 	out_tilehborder:Int,
 	out_tilevborder:Int,
-	spriteId:GUID,
+	spriteId:YyGUID,
 	sprite_no_export:Bool,
-	textureGroupId:GUID,
+	textureGroupId:YyGUID,
 	tile_animation:{
 		AnimationCreationOrder:Any,
 		FrameData:Array<Int>,
 		SerialiseFrameCount:Int
 	},
-	tile_animation_frames:Array<Any>,
+	tile_animation_frames:Array<{
+		id:YyGUID,
+		modelName:String,
+		mvc:String,
+		frames:Array<Int>,
+		name:String
+	}>,
 	tile_animation_speed:Int,
 	tile_count:Int,
 	tileheight:Int,

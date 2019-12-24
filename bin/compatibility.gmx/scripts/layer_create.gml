@@ -6,4 +6,6 @@ with (instance_create(0, 0, obj_gmv_layer)) {
 	} else {
 		name = "_layer_" + string(id);
 	}
+	return id;
 }
+return noone;

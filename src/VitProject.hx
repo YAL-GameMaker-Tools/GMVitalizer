@@ -6,7 +6,9 @@ import sys.FileSystem;
 import sys.io.File;
 import tools.SfGmx;
 import vit.*;
+import tools.StringBuilder;
 import yy.YyProject;
+import Ruleset;
 
 /**
  * ...
@@ -17,6 +19,12 @@ class VitProject {
 	var isOK = false;
 	public var objectNames:Map<YyGUID, String> = new Map();
 	public var spriteNames:Map<YyGUID, String> = new Map();
+	public var gameSpeed:Int = 60;
+	public var tilesetInit:StringBuilder = new StringBuilder();
+	public var tilesets:Map<YyGUID, VitTileset> = new Map();
+	public var noExport:Map<YyGUID, Bool> = new Map();
+	public var nextTileIndex:Int = 10000001;
+	//
 	var folders:Map<YyGUID, YyView> = new Map();
 	var assets:Map<YyGUID, YyProjectResource> = new Map();
 	var rootView:YyView = null;
@@ -56,6 +64,14 @@ class VitProject {
 				}
 			}
 		}
+		//
+		try {
+			var fakeJson = File.getContent(dir + "/options/main/inherited/options_main.inherited.yy");
+			var rxSp = ~/"option_game_speed": ([-\d.]+)/;
+			if (rxSp.match(fakeJson)) {
+				gameSpeed = Std.parseInt(rxSp.matched(1));
+			}
+		} catch (_:Dynamic) {};
 		//
 		Sys.println("Alright.");
 		isOK = true;
@@ -117,6 +133,22 @@ class VitProject {
 		ensureDir('$dir/datafiles');
 		ensureDir('$dir/extensions');
 		//}
+		//{ prepare assets
+		for (pair in project.resources) switch (pair.Value.resourceType) {
+			case "GMTileSet": {
+				var rel = pair.Value.resourcePath;
+				var name = Path.withoutDirectory(Path.withoutExtension(rel));
+				var yyFull = Path.join([projectDir, rel]);
+				var yy:Dynamic = try {
+					Json.parse(File.getContent(yyFull));
+				} catch (x:Dynamic) {
+					Sys.println('Error loading $rel: $x');
+					continue;
+				};
+				VitTileset.pre(name, yy);
+			};
+		}
+		//}
 		function addAssetNode(chain:Array<String>, gmxItem:SfGmx, plural:String, before:Bool = false):Void {
 			var gmxDir = gmx;
 			for (part in chain) {
@@ -140,11 +172,20 @@ class VitProject {
 			gmxDir.addChild(gmxItem);
 		}
 		function printAsset(pair:YyProjectResource, chain:Array<String>):Void {
+			var id = pair.Key;
+			if (noExport[id]) return;
 			var yyType = pair.Value.resourceType;
 			var single = yyType.substring(2).toLowerCase();
-			var plural = single + "s";
 			var path = pair.Value.resourcePath;
 			var name = Path.withoutDirectory(Path.withoutExtension(path));
+			//
+			if (single == "tileset") {
+				single = "background";
+				chain = chain.copy();
+				chain[0] = "background";
+				name = VitTileset.prefix + name;
+			}
+			var plural = single + "s";
 			//
 			var gmxPath = switch (single) {
 				case "sound", "background": '$single\\$name';
@@ -179,11 +220,16 @@ class VitProject {
 					}
 					File.saveContent(outPath, VitGML.proc(gml, name));
 				};
-				case "sprite": VitSprite.proc(yy, yyFull, outPath, name);
-				case "font":   VitFont.proc(name, yy, yyFull, outPath);
-				case "path":   VitPointPath.proc(name, yy, yyFull, outPath);
-				case "sound":  VitSound.proc(name, yy, yyFull, outPath);
-				case "object": VitObject.proc(name, yy, yyFull, outPath);
+				case "sprite": //   VitSprite.proc(name, yy, yyFull, outPath);
+				case "font":   //     VitFont.proc(name, yy, yyFull, outPath);
+				case "path":   //VitPointPath.proc(name, yy, yyFull, outPath);
+				case "sound":  //    VitSound.proc(name, yy, yyFull, outPath);
+				case "object":    VitObject.proc(name, yy, yyFull, outPath);
+				case "room":        VitRoom.proc(name, yy, yyFull, outPath);
+				case "background": {
+					// (we remapped the type earlier on)
+					VitTileset.proc(name, tilesets[id], yyFull, outPath);
+				};
 				case "shader": {
 					var sh:YyShader = yy;
 					var fsh = File.getContent(Path.withExtension(yyFull, "fsh"));
@@ -224,20 +270,32 @@ class VitProject {
 		}
 		printFolder(rootView, []);
 		//
+		if (tilesetInit.length > 0) {
+			var imp = new ImportRule("gmv_tileset_init", null, "script");
+			imp.data = 'gml_pragma("global", "gmv_tileset_init()");\r\n' + tilesetInit.toString();
+			imp.data = VitGML.proc(imp.data, "gmv_tileset_init"); // to trigger imports
+			Ruleset.importList.unshift(imp);
+		}
 		//trace(Ruleset.importList.length); Sys.getChar(true);
 		for (imp in Ruleset.importList) {
 			var name = imp.name;
 			Sys.println('Importing $name...');
 			switch (imp.kind) {
 				case "script": {
-					File.copy(imp.path, '$dir\\scripts\\$name.gml');
+					var dest = '$dir\\scripts\\$name.gml';
+					if (imp.data != null) {
+						File.saveContent(dest, imp.data);
+					} else File.copy(imp.path, dest);
 					addAssetNode(
 						["scripts", "GMS2 compatibility"],
 						new SfGmx("script", 'scripts\\$name.gml'),
 						"scripts", true);
 				};
 				case "object": {
-					File.copy(imp.path, '$dir\\objects\\$name.object.gmx');
+					var dest = '$dir\\objects\\$name.object.gmx';
+					if (imp.data != null) {
+						File.saveContent(dest, imp.data);
+					} else File.copy(imp.path, dest);
 					addAssetNode(
 						["objects", "GMS2 compatibility"],
 						new SfGmx("object", 'objects\\$name'),

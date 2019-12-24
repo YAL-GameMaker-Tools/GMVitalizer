@@ -1,0 +1,68 @@
+package yy;
+
+/**
+ * ...
+ * @author YellowAfterlife
+ */
+typedef YyRoom = {
+	name:String,
+	id:YyGUID,
+	creationCodeFile:String,
+	inheritCode:Bool,
+	inheritCreationOrder:Bool,
+	inheritLayers:Bool,
+	instanceCreationOrderIDs:Array<YyGUID>,
+	IsDnD:Bool,
+	layers:Array<YyRoomLayer>,
+	modelName:String,
+	parentId:YyGUID,
+	physicsSettings:{
+		id:YyGUID,
+		inheritPhysicsSettings:Bool,
+		modelName:String,
+		PhysicsWorld:Bool,
+		PhysicsWorldGravityX:Int,
+		PhysicsWorldGravityY:Int,
+		PhysicsWorldPixToMeters:Float,
+		mvc:String
+	},
+	roomSettings:{
+		id:YyGUID,
+		Height:Int,
+		inheritRoomSettings:Bool,
+		modelName:String,
+		persistent:Bool,
+		mvc:String,
+		Width:Int
+	},
+	mvc:String,
+	views:Array<{
+		id:YyGUID,
+		hborder:Int,
+		hport:Int,
+		hspeed:Int,
+		hview:Int,
+		inherit:Bool,
+		modelName:String,
+		objId:YyGUID,
+		mvc:String,
+		vborder:Int,
+		visible:Bool,
+		vspeed:Int,
+		wport:Int,
+		wview:Int,
+		xport:Int,
+		xview:Int,
+		yport:Int,
+		yview:Int
+	}>,
+	viewSettings:{
+		id:YyGUID,
+		clearDisplayBuffer:Bool,
+		clearViewBackground:Bool,
+		enableViews:Bool,
+		inheritViewSettings:Bool,
+		modelName:String,
+		mvc:String
+	}
+};

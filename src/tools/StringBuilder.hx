@@ -32,10 +32,20 @@ class StringBuilder extends StringBuf {
 					b.addInt(v);
 				} else throw 'Expected an int for arg#$i';
 			},
+			"%f" => function(b:StringBuilder, v:Dynamic, i:Int) {
+				if (Std.is(v, Float)) {
+					b.add(v);
+				} else throw 'Expected an int for arg#$i';
+			},
 			"%c" => function(b:StringBuilder, v:Dynamic, i:Int) {
 				if (Std.is(v, Int)) {
-					b.addInt(v);
+					b.addChar(v);
 				} else throw 'Expected a char for arg#$i';
+			},
+			"%z" => function(b:StringBuilder, v:Dynamic, i:Int) {
+				if (Std.is(v, Bool)) {
+					b.add(v);
+				} else throw 'Expected a bool for arg#$i';
 			},
 			"%t" => function(b:StringBuilder, v:Dynamic, i:Int) {
 				if (Std.is(v, Int)) {

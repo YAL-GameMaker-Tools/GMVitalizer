@@ -1,0 +1,52 @@
+package yy;
+
+/**
+ * @author YellowAfterlife
+ */
+typedef YyRoomLayer = {
+	?gmvBgIndex:Int,
+	//
+	__type:String,
+	name:String,
+	id:YyGUID,
+	depth:Int,
+	grid_x:Int,
+	grid_y:Int,
+	hierarchyFrozen:Bool,
+	hierarchyVisible:Bool,
+	inheritLayerDepth:Bool,
+	inheritLayerSettings:Bool,
+	inheritSubLayers:Bool,
+	inheritVisibility:Bool,
+	layers:Array<Any>,
+	m_parentID:YyGUID,
+	m_serialiseFrozen:Bool,
+	modelName:String,
+	?prev_tileheight:Int,
+	?prev_tilewidth:Int,
+	mvc:String,
+	?tiles:{
+		SerialiseData:Any,
+		SerialiseHeight:Int,
+		SerialiseWidth:Int,
+		TileSerialiseData:Array<Int>
+	},
+	?tilesetId:YyGUID,
+	userdefined_depth:Bool,
+	visible:Bool,
+	x:Int,
+	y:Int,
+	?instances:Array<YyRoomInstance>,
+	?animationFPS:Int,
+	?animationSpeedType:String,
+	?colour:{
+		Value:Int
+	},
+	?hspeed:Int,
+	?htiled:Bool,
+	?spriteId:YyGUID,
+	?stretch:Bool,
+	?userdefined_animFPS:Bool,
+	?vspeed:Int,
+	?vtiled:Bool
+};
