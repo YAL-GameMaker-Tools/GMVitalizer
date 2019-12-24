@@ -48,7 +48,9 @@ class VitSound {
 		q0.addIntChild("uncompressOnLoad", q.kind == 2 ? 1 : 0);
 		q0.addIntChild("audioGroup", 0); // todo
 		var audioSource = Path.join([Path.directory(outPath), "audio", '$name.$type']);
-		File.copy(Path.withoutExtension(inPath), audioSource);
+		if (!Params.ignoreResourceType["soundsrc"]) {
+			File.copy(Path.withoutExtension(inPath), audioSource);
+		}
 		File.saveContent(outPath + '.sound.gmx', q0.toGmxString());
 	}
 }

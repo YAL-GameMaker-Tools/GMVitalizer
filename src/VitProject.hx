@@ -184,6 +184,16 @@ class VitProject {
 				chain = chain.copy();
 				chain[0] = "background";
 				name = VitTileset.prefix + name;
+			} else if (single == "sprite") {
+				var isBg = false;
+				for (rx in Params.backgroundRegex) {
+					if (rx.match(name)) { isBg = true; break; }
+				}
+				if (isBg) {
+					single = "background";
+					chain = chain.copy();
+					chain[0] = "background";
+				}
 			}
 			var plural = single + "s";
 			//
@@ -207,7 +217,7 @@ class VitProject {
 			var outPath = Path.join([dir, gmxPath]);
 			var gmxItem = new SfGmx(single, gmxPath);
 			//
-			switch (single) {
+			if (!Params.ignoreResourceType[single]) switch (single) {
 				case "script": {
 					var scr:YyScript = yy;
 					if (scr.IsCompatibility) return;
@@ -226,9 +236,9 @@ class VitProject {
 				case "sound":      VitSound.proc(name, yy, yyFull, outPath);
 				case "object":    VitObject.proc(name, yy, yyFull, outPath);
 				case "room":        VitRoom.proc(name, yy, yyFull, outPath);
-				case "background": {
-					// (we remapped the type earlier on)
-					VitTileset.proc(name, tilesets[id], yyFull, outPath);
+				case "background": switch (yyType) {
+					case "GMTileSet": VitTileset.proc(name, tilesets[id], yyFull, outPath);
+					case "GMSprite":   VitSprite.procBg(name, yy, yyFull, outPath);
 				};
 				case "shader": {
 					var sh:YyShader = yy;

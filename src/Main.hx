@@ -27,6 +27,7 @@ class Main {
 	}
 	static function main() {
 		var args = Sys.args();
+		args = Params.proc(args);
 		proc(args[0], args[1]);
 	}
 	
