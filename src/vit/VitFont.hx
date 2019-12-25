@@ -1,5 +1,5 @@
 package vit;
-import yy.YyFont;
+import yy.*;
 import haxe.io.Path;
 import sys.io.File;
 import tools.SfGmx;

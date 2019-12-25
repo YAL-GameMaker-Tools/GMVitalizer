@@ -100,18 +100,16 @@ class VitProject {
 		Sys.println("Printing...");
 		var gmx = new SfGmx("assets"), q:SfGmx;
 		//{ prepare GMX
-		q = gmx.addEmptyChild("Configs");
-		q.set("name", "configs");
-		q.addTextChild("Config", "Configs\\Default");
-		q = gmx.addEmptyChild("datafiles");
-		q.set("name", "datafiles");
-		q.setInt("number", 0);
-		gmx.addEmptyChild("NewExtensions");
 		function addCat(kind:String, label:String):SfGmx {
 			var q = gmx.addEmptyChild(kind);
 			q.set("name", label);
 			return q;
 		}
+		q = addCat("Configs", "configs");
+		q.addTextChild("Config", "Configs\\Default");
+		var datafiles = addCat("datafiles", "datafiles");
+		var datafileCount = 0;
+		gmx.addEmptyChild("NewExtensions");
 		addCat("sounds", "sound");
 		addCat("sprites", "sprites");
 		addCat("backgrounds", "background");
@@ -206,7 +204,9 @@ class VitProject {
 			var path = pair.Value.resourcePath;
 			var name = Path.withoutDirectory(Path.withoutExtension(path));
 			//
-			if (single == "tileset") {
+			if (single == "includedfile") {
+				single = "datafile";
+			} else if (single == "tileset") {
 				single = "background";
 				chain = chain.copy();
 				chain[0] = "background";
@@ -257,6 +257,8 @@ class VitProject {
 					}
 					File.saveContent(outPath, VitGML.proc(gml, name));
 				};
+				case "datafile": chain = chain.copy(); chain[0] = "datafiles"; datafileCount++;
+					        VitIncludedFile.proc(name, yy, yyFull, outPath, gmxItem, chain);
 				case "sprite":    VitSprite.proc(name, yy, yyFull, outPath);
 				case "font":        VitFont.proc(name, yy, yyFull, outPath);
 				case "path":   VitPointPath.proc(name, yy, yyFull, outPath);
@@ -306,6 +308,7 @@ class VitProject {
 			}
 		}
 		printFolder(rootView, []);
+		datafiles.setInt("number", datafileCount);
 		//
 		if (tilesetInit.length > 0) {
 			var imp = new ImportRule("gmv_tileset_init", null, "script");
