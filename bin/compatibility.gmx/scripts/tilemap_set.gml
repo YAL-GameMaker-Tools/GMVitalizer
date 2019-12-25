@@ -12,26 +12,31 @@ if (argument0) with (argument0) {
 	); // aim at center since mirrored tiles might be weird
 	//
 	var l_td = argument1;
-	var l_tl = l_ts[gmv_tileset_t.tileSepX] + (l_td mod l_tc) * l_ts[gmv_tileset_t.tileMulX];
-	var l_tt = l_ts[gmv_tileset_t.tileSepY] + (l_td div l_tc) * l_ts[gmv_tileset_t.tileMulY];
-	var l_tx = x + l_x * l_tw;
-	var l_ty = y + l_y * l_th;
-	var l_zx = (l_td & gmv_tile.maskMirror) != 0;
-	var l_zy = (l_td & gmv_tile.maskFlip) != 0;
-	if (l_zx) l_tx += l_tw;
-	if (l_zy) l_ty += l_th;
-	//
-	if (l_tile < 0) {
-		// new tile
-		l_tile = tile_add(l_ts[gmv_tileset_t.tileBack], l_tl, l_tt, l_tw, l_th, l_tx, l_ty, depth);
-	} else {
-		// mod tile
-		var l_tk = l_td & gmv_tile.maskIndex;
+	var l_tk = l_td & gmv_tile.maskIndex;
+	if (l_tk != 0) {
 		var l_tc = l_ts[gmv_tileset_t.tileCols];
-		tile_set_region(l_tile, l_tl, l_tt, l_tw, l_th);
-		tile_set_position(l_tile, l_tx, l_ty);
+		var l_tl = l_ts[gmv_tileset_t.tileSepX] + (l_tk mod l_tc) * l_ts[gmv_tileset_t.tileMulX];
+		var l_tt = l_ts[gmv_tileset_t.tileSepY] + (l_tk div l_tc) * l_ts[gmv_tileset_t.tileMulY];
+		var l_tx = x + l_x * l_tw;
+		var l_ty = y + l_y * l_th;
+		var l_zx = (l_td & gmv_tile.maskMirror) != 0;
+		var l_zy = (l_td & gmv_tile.maskFlip) != 0;
+		if (l_zx) l_tx += l_tw;
+		if (l_zy) l_ty += l_th;
+		//
+		if (l_tile < 0) {
+			// new tile
+			l_tile = tile_add(l_ts[gmv_tileset_t.tileBack], l_tl, l_tt, l_tw, l_th, l_tx, l_ty, depth);
+		} else {
+			// mod tile
+			tile_set_region(l_tile, l_tl, l_tt, l_tw, l_th);
+			tile_set_position(l_tile, l_tx, l_ty);
+		}
+		tile_set_scale(l_tile, 1 - l_zx * 2, 1 - l_zy * 2);
+	} else if (l_tile >= 0) {
+		// a tile but we don't want it
+		tile_delete(l_tile);
 	}
-	tile_set_scale(l_tile, 1 - l_zx * 2, 1 - l_zy * 2);
 	//
 	return true;
 }
