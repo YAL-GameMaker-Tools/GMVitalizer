@@ -150,7 +150,7 @@ class VitRoom {
 				vl = "l_layer";
 				cc.add("var ");
 			}
-			cc.addFormat('%s = layer_create(%s, %d);\r\n', vl, Json.stringify(l.name), lz);
+			cc.addFormat('%s = layer_create(%d, %s);\r\n', vl, lz, Json.stringify(l.name));
 			Ruleset.includeIdent("layer_create");
 			switch (l.modelName) {
 				case "GMRInstanceLayer": {
@@ -205,7 +205,10 @@ class VitRoom {
 						cc.addFormat(", %d", l.gmvBgIndex);
 					}
 					cc.addString(");\r\n");
-					if (l == bgColorLayer) return;
+					if (l == bgColorLayer) {
+						// background color layer would have properties set but we don't care much?
+						return;
+					}
 					if (!l.htiled) {
 						Ruleset.includeIdent("layer_background_htiled");
 						cc.addFormat("layer_background_htiled(%s, %z);\r\n", vb, l.htiled);
