@@ -33,6 +33,16 @@ class VitSprite {
 		q0.addIntChild("width", q.width);
 		q0.addIntChild("height", q.height);
 		q1 = q0.addEmptyChild("frames");
+		var pj = VitProject.current;
+		if (q.frames.length > 1) {
+			var sp = q.playbackSpeed;
+			var st = q.playbackSpeedType;
+			if (st == 0 ? sp != pj.gameSpeed : sp != 1) {
+				trace('Sprite $name uses non-standard playback speed ('
+					+ sp + (st == 0 ? '/${pj.gameSpeed}fps' : 'fpf')
+					+ '). Default speed will be used.');
+			}
+		}
 		var index = 0;
 		var imgDir = Path.join([Path.directory(outPath), "images"]);
 		var baseDir = Path.directory(inPath);
