@@ -28,7 +28,7 @@ class VitSprite {
 		q0.addBoolChild("HTile", q.HTile);
 		q0.addBoolChild("VTile", q.VTile);
 		q1 = q0.addEmptyChild("TextureGroups");
-		q1.addIntChild("TextureGroup0", 0);
+		q1.addIntChild("TextureGroup0", VitProject.current.textureGroupIDs[q.textureGroupId]);
 		q0.addBoolChild("For3D", q.For3D);
 		q0.addIntChild("width", q.width);
 		q0.addIntChild("height", q.height);
@@ -65,7 +65,7 @@ class VitSprite {
 		q0.addBoolChild("HTile", q.HTile);
 		q0.addBoolChild("VTile", q.VTile);
 		q1 = q0.addEmptyChild("TextureGroups");
-		q1.addIntChild("TextureGroup0", 0);
+		q1.addIntChild("TextureGroup0", VitProject.current.textureGroupIDs[q.textureGroupId]);
 		q0.addBoolChild("For3D", q.For3D);
 		//
 		var qf = q.frames[0];

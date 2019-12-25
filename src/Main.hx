@@ -7,6 +7,7 @@ import sys.io.File;
  * @author YellowAfterlife
  */
 class Main {
+	public static var dir:String;
 	static function proc(from:String, to:String) {
 		Ruleset.init();
 		var ext = Path.extension(from).toLowerCase();
@@ -26,6 +27,7 @@ class Main {
 		}
 	}
 	static function main() {
+		dir = Path.directory(Sys.programPath());
 		var args = Sys.args();
 		args = Params.proc(args);
 		proc(args[0], args[1]);

@@ -46,7 +46,7 @@ class VitSound {
 		q0.addIntChild("compressed", q.kind > 0 ? 1 : 0);
 		q0.addIntChild("streamed", q.kind == 3 ? 1 : 0);
 		q0.addIntChild("uncompressOnLoad", q.kind == 2 ? 1 : 0);
-		q0.addIntChild("audioGroup", 0); // todo
+		q0.addIntChild("audioGroup", VitProject.current.audioGroupIDs[q.audioGroupGuid]);
 		var audioSource = Path.join([Path.directory(outPath), "audio", '$name.$type']);
 		if (!Params.ignoreResourceType["soundsrc"]) {
 			File.copy(Path.withoutExtension(inPath), audioSource);

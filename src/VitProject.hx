@@ -4,6 +4,7 @@ import haxe.io.Path;
 import yy.*;
 import sys.FileSystem;
 import sys.io.File;
+import tools.Alias;
 import tools.SfGmx;
 import vit.*;
 import tools.StringBuilder;
@@ -17,20 +18,31 @@ import Ruleset;
 class VitProject {
 	public static var current:VitProject;
 	var isOK = false;
-	public var objectNames:Map<YyGUID, String> = new Map();
-	public var spriteNames:Map<YyGUID, String> = new Map();
+	public var objectNames:Map<YyGUID, Ident> = new Map();
+	public var spriteNames:Map<YyGUID, Ident> = new Map();
 	public var gameSpeed:Int = 60;
 	public var tilesetInit:StringBuilder = new StringBuilder();
 	public var tilesets:Map<YyGUID, VitTileset> = new Map();
 	public var noExport:Map<YyGUID, Bool> = new Map();
 	public var nextTileIndex:Int = 10000001;
+	public var audioGroupIDs:Map<YyGUID, Int> = new Map();
+	public var audioGroupNames:Array<Ident> = [];
+	public var textureGroupIDs:Map<YyGUID, Int> = new Map();
 	//
 	var folders:Map<YyGUID, YyView> = new Map();
 	var assets:Map<YyGUID, YyProjectResource> = new Map();
 	var rootView:YyView = null;
-	var project:YyProject;
-	var projectDir:String;
+	//
+	public var project:YyProject;
+	public var projectPath:FullPath;
+	public var projectDir:FullPath;
+	//
+	public var outPath:FullPath;
+	public var outName:String;
+	public var outDir:FullPath;
+	//
 	public function new(from:String) {
+		projectPath = from;
 		var dir = Path.directory(from);
 		projectDir = dir;
 		Sys.println("Indexing project...");
@@ -78,6 +90,13 @@ class VitProject {
 	}
 	public function print(to:String) {
 		current = this;
+		//
+		outPath = to;
+		outName = Path.withoutDirectory(outPath);
+		for (_ in 0 ... 2) outName = Path.withoutExtension(outName);
+		var dir = Path.directory(to);
+		outDir = dir;
+		//
 		Sys.println("Printing...");
 		var gmx = new SfGmx("assets"), q:SfGmx;
 		//{ prepare GMX
@@ -106,6 +125,9 @@ class VitProject {
 		var macros = gmx.addEmptyChild("constants");
 		macros.setInt("number", 0);
 		gmx.addEmptyChild("help");
+		//
+		var audioGroups = addCat("audiogroups", "audiogroups");
+		//
 		q = gmx.addEmptyChild("TutorialState");
 		q.addTextChild("IsTutorial", "0");
 		q.addTextChild("TutorialName", "");
@@ -117,6 +139,7 @@ class VitProject {
 			if (!FileSystem.exists(path)) FileSystem.createDirectory(path);
 		}
 		ensureDir(dir);
+		ensureDir('$dir/Configs');
 		ensureDir('$dir/sprites');
 		ensureDir('$dir/sprites/images');
 		ensureDir('$dir/sound');
@@ -133,6 +156,10 @@ class VitProject {
 		ensureDir('$dir/datafiles');
 		ensureDir('$dir/extensions');
 		//}
+		VitProjectOptions.proc(this);
+		for (augName in audioGroupNames) {
+			audioGroups.addEmptyChild("audiogroup").set("name", augName);
+		}
 		//{ prepare assets
 		for (pair in project.resources) switch (pair.Value.resourceType) {
 			case "GMTileSet": {

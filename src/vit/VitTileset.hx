@@ -48,6 +48,7 @@ class VitTileset {
 		t.tileMulY = t.tilePadY * 2 + t.tileHeight;
 		t.tileCount = q.tile_count;
 		t.tileCols = q.out_columns;
+		t.tileset = q;
 		//
 		var pj = VitProject.current;
 		pj.tilesets[q.id] = t;
@@ -72,7 +73,7 @@ class VitTileset {
 		q0.addIntChild("HTile", 0);
 		q0.addIntChild("VTile", 0);
 		q1 = q0.addEmptyChild("TextureGroups");
-		q1.addIntChild("TextureGroup0", 0);
+		q1.addIntChild("TextureGroup0", VitProject.current.textureGroupIDs[q.textureGroupId]);
 		q0.addIntChild("For3D", 0);
 		//
 		var inTilesPath = Path.directory(inPath) + '/output_tileset.png';

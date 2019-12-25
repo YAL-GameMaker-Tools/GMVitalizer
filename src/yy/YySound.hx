@@ -9,7 +9,7 @@ typedef YySound = {
 	var modelName:String;
 	var mvc:String;
 	var name:String;
-	var audioGroupGuid:String;
+	var audioGroupGuid:YyGUID;
 	var bitDepth:Int;
 	var bitRate:Int;
 	var kind:Int;

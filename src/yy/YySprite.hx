@@ -62,7 +62,7 @@ typedef YySprite = {
 	var sepmasks:Bool;
 	var swatchColours:Any;
 	var swfPrecision:Float;
-	var textureGroupId:String;
+	var textureGroupId:YyGUID;
 	var type:Int;
 	var width:Int;
 	var xorig:Int;

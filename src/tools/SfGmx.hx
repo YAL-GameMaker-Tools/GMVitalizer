@@ -57,8 +57,11 @@ class SfGmx {
 		} else children.push(newNode);
 	}
 	//
-	public inline function removeChild(q:SfGmx):Void {
-		children.remove(q);
+	public inline function removeChild(q:SfGmx):Bool {
+		return children.remove(q);
+	}
+	public inline function removeChildAt(position:Int):Bool {
+		return children.splice(position, 1).length > 0;
 	}
 	public inline function clearChildren():Void {
 		children.splice(0, children.length);
