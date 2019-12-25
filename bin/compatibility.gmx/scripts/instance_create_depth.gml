@@ -2,9 +2,11 @@
 
 // turns out we want layer set before Create too, whoops
 with (instance_create(argument0, argument1, obj_gmv_blank)) {
-	depth = argument2;
 	layer = -1;
+	var l_depth = object_get_depth(argument3);
+	object_set_depth(argument3, argument2);
 	instance_change(argument3, true);
+	object_set_depth(argument3, l_depth);
 	return id;
 }
 
