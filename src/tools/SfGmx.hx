@@ -134,7 +134,10 @@ class SfGmx {
 		r.addChar("<".code);
 		r.addString(name);
 		for (attr in attrList) {
-			r.addFormat(' %s="%s"', attr, attrMap[attr].htmlEscape(true));
+			var val = attrMap[attr].htmlEscape(true);
+			val = val.replace("\r\n", "&#xA;");
+			val = val.replace("\n", "&#xA;");
+			r.addFormat(' %s="%s"', attr, val);
 		}
 		if (children.length == 0 && text == null) {
 			r.addString("/>");
