@@ -193,7 +193,11 @@ class VitGML {
 								//trace('$np `${src.substring(np, debug_eol)}`');
 								switch (c) {
 									case "[".code, "(".code, "{".code: depth++;
-									case "]".code, ")".code, "}".code: depth--;
+									case "]".code, ")".code, "}".code: {
+										if (depth-- > 0) {
+											np++; continue;
+										}
+									};
 									case '"'.code: {
 										np = src.skipString2(np + 1);
 										continue;
