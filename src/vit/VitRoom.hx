@@ -58,7 +58,22 @@ class VitRoom {
 		r.addBoolChild("enableViews", q.viewSettings.enableViews);
 		r.addBoolChild("clearViewBackground", q.viewSettings.clearViewBackground);
 		r.addBoolChild("clearDisplayBuffer", q.viewSettings.clearDisplayBuffer);
-		r.addEmptyChild("makerSettings");
+		//
+		var makerSettings = r.addEmptyChild("makerSettings");
+		makerSettings.addIntChild("isSet", 0);
+		makerSettings.addIntChild("w", 0);
+		makerSettings.addIntChild("h", 0);
+		makerSettings.addIntChild("showGrid", 0);
+		makerSettings.addIntChild("showObjects", 0);
+		makerSettings.addIntChild("showTiles", 0);
+		makerSettings.addIntChild("showBackgrounds", 0);
+		makerSettings.addIntChild("showForegrounds", 0);
+		makerSettings.addIntChild("showViews", 0);
+		makerSettings.addIntChild("deleteUnderlyingObj", 0);
+		makerSettings.addIntChild("deleteUnderlyingTiles", 0);
+		makerSettings.addIntChild("page", 0);
+		makerSettings.addIntChild("xoffset", 0);
+		makerSettings.addIntChild("yoffset", 0);
 		//
 		var rBgs = r.addEmptyChild("backgrounds");
 		for (i in 0 ... 8) {
@@ -104,13 +119,23 @@ class VitRoom {
 			ri.set("x", "obj_gmv_room_init");
 			ri.setFloat("x", -100);
 			ri.setFloat("y", 100);
+			ri.set("name", "__gmv_room_init_" + name);
+			ri.set("locked", "0");
+			ri.set("code", "");
 			ri.setFloat("scaleX", 1);
 			ri.setFloat("scaleY", 1);
-			ri.set("name", "__gmv_room_init_" + name);
-			ri.set("code", "");
 			ri.set("colour", "4294967295");
 			ri.setFloat("rotation", 0);
 		};
+		//
+		r.addBoolChild("PhysicsWorld", q.physicsSettings.PhysicsWorld);
+		r.addIntChild("PhysicsWorldTop", 0);
+		r.addIntChild("PhysicsWorldLeft", 0);
+		r.addIntChild("PhysicsWorldRight", q.roomSettings.Width);
+		r.addIntChild("PhysicsWorldBottom", q.roomSettings.Height);
+		r.addFloatChild("PhysicsWorldGravityX", q.physicsSettings.PhysicsWorldGravityX);
+		r.addFloatChild("PhysicsWorldGravityY", q.physicsSettings.PhysicsWorldGravityY);
+		r.addFloatChild("PhysicsWorldPixToMeters", q.physicsSettings.PhysicsWorldPixToMeters);
 		//
 		var instMap = new Map<YyGUID, YyRoomInstance>();
 		var instGmx = new Map<YyGUID, SfGmx>();
@@ -147,8 +172,6 @@ class VitRoom {
 							ri.setFloat("y", ry);
 							cc.addFormat("%s.y += %f;\r\n", o.name, o.y - ry);
 						} else ri.setFloat("y", o.y);
-						ri.setFloat("scaleX", o.scaleX);
-						ri.setFloat("scaleY", o.scaleY);
 						ri.set("name", o.name);
 						var occ = "";
 						if (o.creationCodeFile != "") try {
@@ -157,7 +180,10 @@ class VitRoom {
 								occ = StringTools.replace(occ, "\t", "    ");
 							}
 						} catch (_:Dynamic) {};
+						ri.set("locked", "0");
 						ri.set("code", occ);
+						ri.setFloat("scaleX", o.scaleX);
+						ri.setFloat("scaleY", o.scaleY);
 						ri.setInt("colour", o.colour.Value);
 						ri.setFloat("rotation", o.rotation);
 						instGmx[o.id] = ri;
@@ -243,7 +269,7 @@ class VitRoom {
 		//
 		var rccFinal = try {
 			File.getContent('$inDir/RoomCreationCode.gml');
-		} catch (_:Dynamic) null;
+		} catch (_:Dynamic) "";
 		rccNode.text = rccFinal;
 		//
 		var imp = new ImportRule("gmv_room_init_" + name, null, "script");
