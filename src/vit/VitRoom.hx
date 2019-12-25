@@ -200,12 +200,37 @@ class VitRoom {
 					var spr = pj.spriteNames[l.spriteId];
 					if (spr == null) spr = "-1";
 					Ruleset.includeIdent("layer_background_create");
-					cc.addFormat("%s = layer_background_create(%s, %s);\r\n", vb, vl, spr);
+					cc.addFormat("%s = layer_background_create(%s, %s", vb, vl, spr);
+					if (l.gmvBgIndex >= 0) {
+						cc.addFormat(", %d", l.gmvBgIndex);
+					}
+					cc.addString(");\r\n");
+					if (l == bgColorLayer) return;
+					if (!l.htiled) {
+						Ruleset.includeIdent("layer_background_htiled");
+						cc.addFormat("layer_background_htiled(%s, %z);\r\n", vb, l.htiled);
+					}
+					if (!l.vtiled) {
+						Ruleset.includeIdent("layer_background_vtiled");
+						cc.addFormat("layer_background_vtiled(%s, %z);\r\n", vb, l.vtiled);
+					}
 					if (l.stretch) {
 						Ruleset.includeIdent("layer_background_stretch");
-						cc.addFormat("layer_background_stretch(%s, %z);\r\n", vb, true);
+						cc.addFormat("layer_background_stretch(%s, %z);\r\n", vb, l.stretch);
 					}
-					// todo: a lot
+					//
+					var rgba = l.colour.Value;
+					var a = Std.int(rgba / 16777216.);
+					if (a < 255) {
+						Ruleset.includeIdent("layer_background_alpha");
+						cc.addFormat("layer_background_alpha(%s, %f);\r\n", vb, a/255.);
+					}
+					var rgb = Std.int(rgba % 16777216);
+					if (rgb != 0xFFFFFF) {
+						Ruleset.includeIdent("layer_background_blend");
+						cc.addFormat("layer_background_blend(%s, $%s);\r\n", vb,
+							StringTools.hex(rgb, 6));
+					}
 				};
 				case "GMRTileLayer": {
 					if (l.tilesetId == YyGUID.zero) return;
@@ -257,6 +282,7 @@ class VitRoom {
 						rt.setInt("scaleY", tileFlip ? -1 : 1);
 					}
 				};
+				default: trace("Can't convert " + l.modelName);
 			}
 		}
 		for (l in q.layers) printLayerRec(l);

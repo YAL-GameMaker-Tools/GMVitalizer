@@ -26,6 +26,10 @@
           <argument>
             <kind>1</kind>
             <string>backIndex = -1;
+backArrayIndex = -1; // if set, modifies GMS1 background_[] vars directly
+backHTiled = true;
+backVTiled = true;
+backStretch = false;
 </string>
           </argument>
         </arguments>
@@ -49,6 +53,7 @@
           <argument>
             <kind>1</kind>
             <string>// todo: see about drawing the background
+if (backArrayIndex &gt;= 0) exit;
 </string>
           </argument>
         </arguments>

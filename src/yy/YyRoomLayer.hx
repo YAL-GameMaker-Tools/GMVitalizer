@@ -40,7 +40,7 @@ typedef YyRoomLayer = {
 	?animationFPS:Int,
 	?animationSpeedType:String,
 	?colour:{
-		Value:Int
+		Value:Float
 	},
 	?hspeed:Int,
 	?htiled:Bool,

@@ -49,6 +49,10 @@
       </scripts>
       <scripts name="Background">
         <script>scripts\layer_background_create.gml</script>
+        <script>scripts\layer_background_htiled.gml</script>
+        <script>scripts\layer_background_vtiled.gml</script>
+        <script>scripts\layer_background_blend.gml</script>
+        <script>scripts\layer_background_alpha.gml</script>
       </scripts>
     </scripts>
   </scripts>
