@@ -320,7 +320,7 @@ class VitProject {
 		//
 		{
 			var spb = new StringBuilder();
-			spb.addFormat('gml_pragma("global", "gmv_sprite_speed_init");\r\n');
+			spb.addFormat('gml_pragma("global", "gmv_sprite_speed_init()");\r\n');
 			spb.addFormat("var l_data = ds_list_create();\r\n");
 			spb.addString(spriteSpeedBuf.toString());
 			spb.addString("var l_count = ds_list_size(l_data);\r\n");
@@ -332,6 +332,7 @@ class VitProject {
 			spb.addString("sprite_speed_array_size = l_max;\r\n");
 			spb.addString("globalvar sprite_speed_array;\r\n");
 			spb.addString("sprite_speed_array = array_create(l_max);\r\n");
+			spb.addString("while (--l_max >= 0) sprite_speed_array[l_max] = 1;\r\n");
 			spb.addString("for (var l_i = 0; l_i < l_count; l_i += 2) "
 				+ "sprite_speed_array[l_data[|l_i]] = l_data[|l_i + 1];\r\n");
 			var imp = new ImportRule("gmv_sprite_speed_init", null, "script");

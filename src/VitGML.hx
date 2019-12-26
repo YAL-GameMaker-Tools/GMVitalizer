@@ -2,6 +2,7 @@ package;
 using StringTools;
 using tools.StringToolsEx;
 import Ruleset;
+import tools.Alias;
 
 /**
  * GMS2-GML -> GMS1-GML conversion
@@ -9,11 +10,102 @@ import Ruleset;
  */
 class VitGML {
 	public static var macroList:Array<GmlMacro> = [];
+	public static inline var commentEOL:CharCode = 27;
+	public static inline var commentEOLs:String = String.fromCharCode(27);
 	
 	static function fixSpaces(src:String):String {
 		src = src.replace("\t", "    "); // GMS1 is Very Bad with tabs
 		src = src.replace("\u00A0", " "); // non-breaking space! Allowed in GMS2 for some reason
 		return src;
+	}
+	
+	static function escapeComments(src:String):String {
+		var out = new StringBuf();
+		var pos = 0;
+		var len = src.length;
+		var start = 0;
+		
+		#if !debug inline #end
+		function flush(till:Int):Void {
+			out.addSub(src, start, till - start);
+		}
+		
+		while (pos < len) {
+			var at = pos;
+			var c = src.fastCodeAt(pos++);
+			switch (c) {
+				case "/".code: { // comments
+					if (pos < len) switch (src.fastCodeAt(pos)) {
+						case "/".code: {
+							pos = src.skipLine(pos + 1);
+							flush(pos);
+							out.addChar(commentEOL);
+							start = pos;
+						};
+						case "*".code: pos = src.skipComment(pos + 1);
+					}
+				};
+				case '#'.code: { // possibly macros or regions
+					if (!src.fastCodeAt(pos).isIdent0()) {
+						// not what we want
+					} else {
+						var np = src.skipIdent1(pos);
+						switch (src.substring(pos, np)) {
+							case "macro": {
+								var nameAt = src.skipSpace1(np);
+								pos = src.skipIdent1(nameAt);
+								var name = src.substring(nameAt, pos);
+								var config:String;
+								if (src.fastCodeAt(pos) == ":".code) {
+									config = name;
+									nameAt = ++pos;
+									pos = src.skipIdent1(pos);
+									name = src.substring(nameAt, pos);
+								} else config = null;
+								var valueAt = src.skipSpace1(pos);
+								pos = src.skipLine(pos);
+								var value = "";
+								while (src.fastCodeAt(pos - 1) == "\\".code) {
+									if (value != "") value += " ";
+									value += src.substring(valueAt, pos - 1);
+									if (src.fastCodeAt(pos) == "\r".code) pos++;
+									if (src.fastCodeAt(pos) == "\n".code) pos++;
+									valueAt = pos;
+									pos = src.skipLine(pos);
+								}
+								if (value != "") value += " ";
+								value += src.substring(valueAt, pos);
+								var m = new GmlMacro(name, value, config);
+								macroList.push(m);
+								flush(at);
+								out.add('//#macro ');
+								if (config != null) out.add('$config:');
+								out.add('$name $value');
+								start = pos;
+							};
+							case "region", "endregion": {
+								pos = src.skipLine(pos);
+								flush(at);
+								out.add("//");
+								out.addSub(src, at, pos - at);
+								start = pos;
+							};
+						}
+					}
+				};
+				case '@'.code: { // possibly string literals
+					c = src.fastCodeAt(pos++);
+					if (c == '"'.code || c == "'".code) { // it's them
+						pos = src.skipString1(pos, c);
+					}
+				};
+				case '"'.code: pos = src.skipString2(pos);
+				default:
+			}
+		}
+		if (start == 0) return src;
+		flush(pos);
+		return out.toString();
 	}
 	
 	/**
@@ -147,6 +239,7 @@ class VitGML {
 	}
 	
 	public static function proc(src:String, ctx:String):String {
+		src = escapeComments(src);
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
 		
@@ -166,28 +259,45 @@ class VitGML {
 		function procRemaps(startWord:String, at:Int, remaps:Array<RemapRule>) {
 			var debug = false;
 			var foundRemap = false;
-			var dotkReady = false;
-			var dotkString:String = null;
-			var dotkPos:Int = 0;
+			var dotPrefixReady = false;
+			var dotPrefixString:String = null;
+			var dotPrefixStart:StringPos = 0;
+			var precedingDot = false;
+			var precedingDotPos = -1;
+			var precedingDotReady = false;
 			for (remap in remaps) {
 				var dotIndex = remap.dotIndex;
+				if ((dotIndex >= 0 || remap.selfOnly) && !precedingDotReady) {
+					precedingDotReady = true;
+					var lp = at;
+					while (--lp >= 0) {
+						var c = src.fastCodeAt(lp);
+						if (c.isSpace0()) continue;
+						precedingDotPos = lp;
+						precedingDot = (c == ".".code);
+						break;
+					}
+				}
+				if (remap.selfOnly && precedingDot) continue;
 				if (dotIndex >= 0) {
-					if (!dotkReady) {
-						dotkReady = true;
-						var lp = at;
-						while (--lp >= 0) {
-							var c = src.fastCodeAt(lp);
-							if (c.isSpace0()) continue;
-							if (c == ".".code) {
-								dotkPos = src.skipDotExprBackwards(lp + 1);
-								dotkString = src.substring(dotkPos, lp);
-								//trace(dotkString);
-							}
-							break;
+					if (!dotPrefixReady) {
+						dotPrefixReady = true;
+						if (precedingDot) {
+							dotPrefixStart = src.skipDotExprBackwards(precedingDotPos);
+							dotPrefixString = src.substring(dotPrefixStart, precedingDotPos);
 						}
 					}
-					if (dotkString == null) continue;
+					if (dotPrefixString == null) continue;
 				}
+				//
+				var flushTill = dotIndex >= 0 ? dotPrefixStart : at;
+				if (remap.statOnly) {
+					//trace(src.substring(0, flushTill));
+					if (!src.isStatementBacktrack(flushTill)) continue;
+				} else if (remap.exprOnly) {
+					if (src.isStatementBacktrack(flushTill)) continue;
+				}
+				//
 				var caps = null;
 				var np = pos;
 				var item:RemapRuleItem;
@@ -212,6 +322,11 @@ class VitGML {
 						case Text(s): {
 							np = src.compareNs(np, s);
 							if (np < 0) break;
+						};
+						case SkipSet: {
+							np = src.skipSpace0(np);
+							if (src.fastCodeAt(np++) != "=".code) break;
+							if (src.fastCodeAt(np) == "=".code) break;
 						};
 						case CaptureBinOp(ind), CaptureSetOp(ind): {
 							np = src.skipSpace0(np);
@@ -302,7 +417,7 @@ class VitGML {
 				//
 				if (dotIndex >= 0) {
 					if (caps == null) caps = [];
-					caps[remap.dotIndex] = dotkString;
+					caps[remap.dotIndex] = dotPrefixString;
 				}
 				// process code inside captures (to allow nesting):
 				if (caps != null) for (i in 0 ... caps.length) {
@@ -314,7 +429,7 @@ class VitGML {
 					for (imp in remap.dependants) imp.include();
 				}
 				// flush and print rule output:
-				flush(dotIndex >= 0 ? dotkPos : at);
+				flush(flushTill);
 				if (debug) {
 					trace("replace", remap.outputs, caps);
 					//Sys.getChar(true);
@@ -322,6 +437,7 @@ class VitGML {
 				for (item in remap.outputs) switch (item) {
 					case Text(s): out.add(s);
 					case Capture(i): out.add(caps[i]);
+					case SkipSet: out.add("=");
 					case CaptureSetOp(i): {
 						var cap = caps[i];
 						if (cap != null && !cap.endsWith("=")) cap += "=";
@@ -424,53 +540,6 @@ class VitGML {
 						start = pos;
 					}
 				};
-				case '#'.code: { // possibly macros or regions
-					if (!src.fastCodeAt(pos).isIdent0()) {
-						// not what we want
-					} else {
-						var np = src.skipIdent1(pos);
-						switch (src.substring(pos, np)) {
-							case "macro": {
-								var nameAt = src.skipSpace1(np);
-								pos = src.skipIdent1(nameAt);
-								var name = src.substring(nameAt, pos);
-								var config:String;
-								if (src.fastCodeAt(pos) == ":".code) {
-									config = name;
-									nameAt = ++pos;
-									pos = src.skipIdent1(pos);
-									name = src.substring(nameAt, pos);
-								} else config = null;
-								var valueAt = src.skipSpace1(pos);
-								pos = src.skipLine(pos);
-								var value = "";
-								while (src.fastCodeAt(pos - 1) == "\\".code) {
-									if (value != "") value += " ";
-									value += src.substring(valueAt, pos - 1);
-									if (src.fastCodeAt(pos) == "\r".code) pos++;
-									if (src.fastCodeAt(pos) == "\n".code) pos++;
-									valueAt = pos;
-									pos = src.skipLine(pos);
-								}
-								if (value != "") value += " ";
-								value += src.substring(valueAt, pos);
-								var m = new GmlMacro(name, value, config);
-								macroList.push(m);
-								flush(at);
-								out.add('//#macro ');
-								if (config != null) out.add('$config:');
-								out.add('$name $value');
-								start = pos;
-							};
-							case "region", "endregion": {
-								pos = src.skipLine(pos);
-								flush(at);
-								out.add("//");
-								start = pos;
-							};
-						}
-					}
-				};
 				case '"'.code: procString2(at);
 				case "[".code: { // possibly an array literal
 					var lp = at;
@@ -530,9 +599,12 @@ class VitGML {
 				};
 			}
 		}
-		if (start == 0) return src;
-		flush(pos);
-		return out.toString();
+		if (start != 0) {
+			flush(pos);
+			src = out.toString();
+		}
+		src = src.replace(commentEOLs, "");
+		return src;
 	}
 }
 class GmlMacro {

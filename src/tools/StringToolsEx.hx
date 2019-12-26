@@ -263,13 +263,78 @@ class StringToolsEx {
 						} else break;
 					}
 					var id = src.substring(pos, till);
-					if (depth == 0) {
+					var np = pos;
+					while (--np >= 0) {
+						if (!src.fastCodeAt(np).isSpace0()) break;
+					}
+					if (src.fastCodeAt(np) == ".".code) {
+						pos = np;
+					} else if (depth == 0) {
 						return pos;
 					}
 				}
 			}
 		}
 		return 0;
+	}
+	
+	/**
+	 * `if (_) ¦` -> true, `if (a || ¦b)` -> false, etc.
+	 */
+	public static function isStatementBacktrack(src:String, pos:StringPos):Bool {
+		while (--pos >= 0) {
+			var c = src.fastCodeAt(pos);
+			switch (c) {
+				case '"'.code, "'".code: return true;
+				case ")".code, "]".code, "{".code, "}".code: return true;
+				case "(".code, "[".code: return false;
+				case "+".code, "-".code: {
+					if (src.fastCodeAt(--pos) == c) { //++thing?
+						// keep going
+					} else return false;
+				};
+				case "/".code: {
+					if (src.fastCodeAt(--pos) == "*".code) { // comment
+						pos--;
+						while (--pos >= 0) {
+							if (src.fastCodeAt(pos) == "*".code
+								&& src.fastCodeAt(pos - 1) == "/".code
+							) {
+								pos--;
+							}
+						}
+					} else return false;
+				};
+				case VitGML.commentEOL: {
+					while (--pos >= 0) {
+						if (src.fastCodeAt(pos) == "/".code
+							&& src.fastCodeAt(pos - 1) == "/".code
+						) {
+							pos--;
+						}
+					}
+				};
+				case ".".code: {
+					
+				};
+				case"|".code, "^".code, "&".code,
+					"*".code, "%".code,
+					">".code, "<".code,
+				"=".code: return false; // def. operators
+				case _ if (c.isIdent1()): {
+					var till = pos + 1;
+					while (pos > 0) {
+						if (src.fastCodeAt(pos - 1).isIdent1()) pos--; else break;
+					}
+					var id = src.substring(pos, till);
+					return switch (id) {
+						case "if", "while", "until", "repeat", "switch", "case": false;
+						default: !operatorKeywords[id];
+					}
+				};
+			}
+		}
+		return true;
 	}
 	
 	/** includes spaces, tabs, linebreaks */

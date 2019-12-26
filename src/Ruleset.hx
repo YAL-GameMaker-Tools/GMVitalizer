@@ -51,9 +51,11 @@ class Ruleset {
 		raw = raw.replace("\r\n", "\n");
 		var rxWord = ~/\w+/g;
 		//
-		~/^remap\s+(?:\$(\d).)?(\w+)(.*?)->\s*(.+)/gm.each(raw, function(rx:EReg) {
+		~/^remap(?:\(([\w, ]+)\))?\s+(?:\$(\d).)?(\w+)(.*?)->\s*(.+)/gm
+		.each(raw, function(rx:EReg) {
 			var ind = 0;
 			var all   = rx.matched(0);
+			var flags = rx.matched(++ind);
 			var dotk  = rx.matched(++ind);
 			var start = rx.matched(++ind);
 			var from  = rx.matched(++ind).rtrim();
@@ -61,6 +63,15 @@ class Ruleset {
 			//
 			var rule = new RemapRule(from, to);
 			if (dotk != null) rule.dotIndex = Std.parseInt(dotk);
+			if (flags != null) rxWord.each(flags, function(rx:EReg) {
+				var f = rx.matched(0);
+				switch (f) {
+					case "expr": rule.exprOnly = true;
+					case "stat": rule.statOnly = true;
+					case "self": rule.selfOnly = true;
+					default: throw 'Unknown flag `$f` in `$all`';
+				}
+			});
 			//
 			var arr = remaps[start];
 			if (arr == null) {
@@ -146,7 +157,12 @@ class RemapRule {
 	public var outputs:Array<RemapRuleItem> = [];
 	public var dependants:Array<ImportRule> = [];
 	public var isUsed:Bool = false;
+	//
 	public var dotIndex:Int = -1;
+	public var statOnly:Bool = false;
+	public var exprOnly:Bool = false;
+	public var selfOnly:Bool = false;
+	//
 	public function new(input:String, output:String) {
 		inputs = parse(input, true);
 		inputString = input;
@@ -159,7 +175,7 @@ class RemapRule {
 			case Text(src): {
 				ImportRule.indexCode(src, dependants, found);
 			};
-			case Capture(_), CaptureBinOp(_), CaptureSetOp(_): {};
+			case Capture(_), CaptureBinOp(_), CaptureSetOp(_), SkipSet: {};
 		}
 	}
 	static var parse_rxPair:EReg = ~/^(\d):(.+)$/;
@@ -187,6 +203,7 @@ class RemapRule {
 					switch (text) {
 						case "op": out.push(CaptureBinOp(ind));
 						case "aop": out.push(CaptureSetOp(ind));
+						case "set": out.push(SkipSet);
 						default: throw 'Uknown capture type `$text` in `$src`';
 					}
 					pos = end + 1;
@@ -221,6 +238,7 @@ class RemapRule {
 enum RemapRuleItem {
 	Text(s:String);
 	Capture(ind:Int);
+	SkipSet; // `=`, no `==`
 	CaptureSetOp(ind:Int); // `+=`
 	CaptureBinOp(ind:Int); // `+`
 }
