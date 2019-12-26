@@ -188,7 +188,7 @@ class VitRoom {
 						ri.setFloat("rotation", o.rotation);
 						instGmx[o.id] = ri;
 						//
-						cc.addFormat("%s.depth = %d;\r\n", o.name, lz);
+						cc.addFormat("gmv_instance_prepare(%s, %d);\r\n", o.name, lz);
 					}
 				};
 				case "GMRBackgroundLayer": {

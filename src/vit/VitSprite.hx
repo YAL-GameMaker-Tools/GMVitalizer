@@ -38,7 +38,13 @@ class VitSprite {
 			var sp = q.playbackSpeed;
 			var st = q.playbackSpeedType;
 			if (st == 0 ? sp != pj.gameSpeed : sp != 1) {
-				trace('Sprite $name uses non-standard playback speed ('
+				if (true) {
+					pj.spriteSpeedBuf.addFormat("ds_list_add(l_data, %s, ", q.name);
+					if (st == 0) {
+						pj.spriteSpeedBuf.addFormat("%f/%f", sp, pj.gameSpeed);
+					} else pj.spriteSpeedBuf.addFormat("%f", sp);
+					pj.spriteSpeedBuf.addFormat(");\r\n");
+				} else trace('Sprite $name uses non-standard playback speed ('
 					+ sp + (st == 0 ? '/${pj.gameSpeed}fps' : 'fpf')
 					+ '). Default speed will be used.');
 			}

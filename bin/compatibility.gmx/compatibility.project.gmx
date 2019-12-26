@@ -23,6 +23,15 @@
       <script>scripts\instance_create_layer.gml</script>
       <script>scripts\instance_destroy_ext.gml</script>
       <script>scripts\gmv_instance_prepare.gml</script>
+      <scripts name="image_speed">
+        <script>scripts\image_speed_get.gml</script>
+        <script>scripts\image_speed_set.gml</script>
+        <script>scripts\image_speed_pre.gml</script>
+        <script>scripts\image_speed_post.gml</script>
+      </scripts>
+      <scripts name="sprite_index">
+        <script>scripts\sprite_index_set.gml</script>
+      </scripts>
     </scripts>
     <scripts name="Layers">
       <scripts name="General">

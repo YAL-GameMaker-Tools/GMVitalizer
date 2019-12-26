@@ -28,6 +28,7 @@ class VitProject {
 	public var audioGroupIDs:Map<YyGUID, Int> = new Map();
 	public var audioGroupNames:Array<Ident> = [];
 	public var textureGroupIDs:Map<YyGUID, Int> = new Map();
+	public var spriteSpeedBuf:StringBuilder = new StringBuilder();
 	//
 	var folders:Map<YyGUID, YyView> = new Map();
 	var assets:Map<YyGUID, YyProjectResource> = new Map();
@@ -316,6 +317,27 @@ class VitProject {
 			imp.data = VitGML.proc(imp.data, "gmv_tileset_init"); // to trigger imports
 			Ruleset.importList.unshift(imp);
 		}
+		//
+		{
+			var spb = new StringBuilder();
+			spb.addFormat('gml_pragma("global", "gmv_sprite_speed_init");\r\n');
+			spb.addFormat("var l_data = ds_list_create();\r\n");
+			spb.addString(spriteSpeedBuf.toString());
+			spb.addString("var l_count = ds_list_size(l_data);\r\n");
+			spb.addString("var l_max = 0;\r\n");
+			spb.addString("for (var l_i = 0; l_i < l_count; l_i += 2) "
+				+ "l_max = max(l_max, l_data[|l_i]);\r\n");
+			spb.addString("l_max++;\r\n");
+			spb.addString("globalvar sprite_speed_array_size;\r\n");
+			spb.addString("sprite_speed_array_size = l_max;\r\n");
+			spb.addString("globalvar sprite_speed_array;\r\n");
+			spb.addString("sprite_speed_array = array_create(l_max);\r\n");
+			spb.addString("for (var l_i = 0; l_i < l_count; l_i += 2) "
+				+ "sprite_speed_array[l_data[|l_i]] = l_data[|l_i + 1];\r\n");
+			var imp = new ImportRule("gmv_sprite_speed_init", null, "script");
+			imp.data = spb.toString();
+			Ruleset.importList.unshift(imp);
+		};
 		//trace(Ruleset.importList.length); Sys.getChar(true);
 		for (imp in Ruleset.importList) {
 			var name = imp.name;

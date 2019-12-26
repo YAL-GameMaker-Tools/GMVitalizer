@@ -15,8 +15,23 @@ using tools.ERegTools;
  */
 class Ruleset {
 	public static var remapList:Array<RemapRule> = [];
+	
+	/**
+	 * Potential remaps that can be triggered by referencing an identifier.
+	 * So if you had
+	 * remap view_camera[$1] = $2 -> view_set_camera($1, $2)
+	 * remap view_camera[$1] -> ($1)
+	 * remaps["view_camera"] would contain those two RemapRules
+	 */
 	public static var remaps:Map<Ident, Array<RemapRule>> = new Map();
+	
+	/**
+	 * Imports included when a given identifier (e.g. function name) appears.
+	 * This includes referencing them directly or rulesets (import X if Y)
+	 */
 	public static var importsByIdent:Map<Ident, Array<ImportRule>> = new Map();
+	
+	/**  */
 	public static var importMap:Map<Ident, ImportRule> = new Map();
 	/** Imports that we're going to add to project */
 	public static var importList:Array<ImportRule> = [];
@@ -36,17 +51,22 @@ class Ruleset {
 		raw = raw.replace("\r\n", "\n");
 		var rxWord = ~/\w+/g;
 		//
-		~/^remap\s+(\w+)(.*?)->\s*(.+)/gm.each(raw, function(rx:EReg) {
-			var all = rx.matched(0);
-			var start = rx.matched(1);
-			var from = rx.matched(2).rtrim();
-			var to = rx.matched(3).rtrim();
+		~/^remap\s+(?:\$(\d).)?(\w+)(.*?)->\s*(.+)/gm.each(raw, function(rx:EReg) {
+			var ind = 0;
+			var all   = rx.matched(0);
+			var dotk  = rx.matched(++ind);
+			var start = rx.matched(++ind);
+			var from  = rx.matched(++ind).rtrim();
+			var to    = rx.matched(++ind).rtrim();
+			//
+			var rule = new RemapRule(from, to);
+			if (dotk != null) rule.dotIndex = Std.parseInt(dotk);
+			//
 			var arr = remaps[start];
 			if (arr == null) {
 				arr = [];
 				remaps[start] = arr;
 			}
-			var rule = new RemapRule(from, to);
 			arr.push(rule);
 			remapList.push(rule);
 		});
@@ -126,6 +146,7 @@ class RemapRule {
 	public var outputs:Array<RemapRuleItem> = [];
 	public var dependants:Array<ImportRule> = [];
 	public var isUsed:Bool = false;
+	public var dotIndex:Int = -1;
 	public function new(input:String, output:String) {
 		inputs = parse(input, true);
 		inputString = input;
@@ -138,9 +159,10 @@ class RemapRule {
 			case Text(src): {
 				ImportRule.indexCode(src, dependants, found);
 			};
-			case Capture(_): {};
+			case Capture(_), CaptureBinOp(_), CaptureSetOp(_): {};
 		}
 	}
+	static var parse_rxPair:EReg = ~/^(\d):(.+)$/;
 	static function parse(src:String, isInput:Bool):Array<RemapRuleItem> {
 		var out:Array<RemapRuleItem> = [];
 		var pos = 0;
@@ -153,7 +175,23 @@ class RemapRule {
 			var c = src.fastCodeAt(pos++);
 			if (c == "$".code) {
 				c = src.fastCodeAt(pos++);
-				if (c >= "0".code && c <= "9".code) {
+				if (c == "{".code) {
+					var end = src.indexOf("}", pos);
+					var text = src.substring(pos, end);
+					var ind:Int = 0;
+					if (parse_rxPair.match(text)) {
+						ind = Std.parseInt(parse_rxPair.matched(1));
+						text = parse_rxPair.matched(2);
+					}
+					flush(pos - 2);
+					switch (text) {
+						case "op": out.push(CaptureBinOp(ind));
+						case "aop": out.push(CaptureSetOp(ind));
+						default: throw 'Uknown capture type `$text` in `$src`';
+					}
+					pos = end + 1;
+					start = pos;
+				} else if (c >= "0".code && c <= "9".code) {
 					flush(pos - 2);
 					out.push(Capture(c - "0".code));
 					start = pos;
@@ -183,6 +221,8 @@ class RemapRule {
 enum RemapRuleItem {
 	Text(s:String);
 	Capture(ind:Int);
+	CaptureSetOp(ind:Int); // `+=`
+	CaptureBinOp(ind:Int); // `+`
 }
 class ImportRule {
 	public var dependants:Array<ImportRule> = [];

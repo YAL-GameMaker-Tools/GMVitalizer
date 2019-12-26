@@ -9,6 +9,13 @@ import Ruleset;
  */
 class VitGML {
 	public static var macroList:Array<GmlMacro> = [];
+	
+	static function fixSpaces(src:String):String {
+		src = src.replace("\t", "    "); // GMS1 is Very Bad with tabs
+		src = src.replace("\u00A0", " "); // non-breaking space! Allowed in GMS2 for some reason
+		return src;
+	}
+	
 	/**
 	 * Doing `var a = 1\nb = 2` throws an ambiguity error in GM:S
 	 * (because you used to be able to `var a b` instead of `var a, b` in GM8)
@@ -140,7 +147,9 @@ class VitGML {
 	}
 	
 	public static function proc(src:String, ctx:String):String {
+		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
+		
 		var out = new StringBuf();
 		var pos = 0;
 		var len = src.length;
@@ -148,6 +157,8 @@ class VitGML {
 		
 		#if !debug inline #end
 		function flush(till:Int):Void {
+			//if (till < start) throw 'illegal flush ($till<$start) `${src.substring(0, till)}`';
+			//out.add(src.substring(start, till));
 			out.addSub(src, start, till - start);
 		}
 		
@@ -155,7 +166,28 @@ class VitGML {
 		function procRemaps(startWord:String, at:Int, remaps:Array<RemapRule>) {
 			var debug = false;
 			var foundRemap = false;
+			var dotkReady = false;
+			var dotkString:String = null;
+			var dotkPos:Int = 0;
 			for (remap in remaps) {
+				var dotIndex = remap.dotIndex;
+				if (dotIndex >= 0) {
+					if (!dotkReady) {
+						dotkReady = true;
+						var lp = at;
+						while (--lp >= 0) {
+							var c = src.fastCodeAt(lp);
+							if (c.isSpace0()) continue;
+							if (c == ".".code) {
+								dotkPos = src.skipDotExprBackwards(lp + 1);
+								dotkString = src.substring(dotkPos, lp);
+								//trace(dotkString);
+							}
+							break;
+						}
+					}
+					if (dotkString == null) continue;
+				}
 				var caps = null;
 				var np = pos;
 				var item:RemapRuleItem;
@@ -181,14 +213,43 @@ class VitGML {
 							np = src.compareNs(np, s);
 							if (np < 0) break;
 						};
+						case CaptureBinOp(ind), CaptureSetOp(ind): {
+							np = src.skipSpace0(np);
+							var opStart = np;
+							var c = src.fastCodeAt(np++);
+							switch (c) {
+								case "+".code, "-".code, "*".code, "/".code, "%".code,
+									"|".code, "^".code, "&".code
+								: {
+									var isSet = item.match(CaptureSetOp(_));
+									if (isSet) {
+										if (src.fastCodeAt(np++) != "=".code) break;
+									} else {
+										var c1 = src.fastCodeAt(np);
+										switch (c1) {
+											case "=".code: break;
+											case "|".code, "^".code, "&".code if (c == c1): np++;
+										}
+									}
+									if (caps == null) caps = [];
+									caps[ind] = src.substring(opStart, np).trim();
+								};
+								default: break;
+							}
+						};
 						case Capture(capi): {
 							var depth = 0;
-							var after = switch (inputs[iid + 1]) {
-								case Text(s): s;
-								default: null;
+							var after:String = null;
+							if (iid + 1 < length) switch (inputs[iid + 1]) {
+								case Text(s): after = s;
+								default:
 							}
 							var np0 = np;
-							while (np < len) {
+							if (after == null) {
+								np = src.skipExpr(np);
+								if (caps == null) caps = [];
+								caps[capi] = src.substring(np0, np);
+							} else while (np < len) {
 								var c = src.fastCodeAt(np);
 								//trace('$np `${src.substring(np, debug_eol)}`');
 								switch (c) {
@@ -230,7 +291,7 @@ class VitGML {
 										break;
 									}
 								} else np++;
-							}
+							} // while (balanced walk till after-expr)
 						};
 					}
 				} // while (iid)
@@ -238,6 +299,11 @@ class VitGML {
 					trace('np=$np, id=$iid/$length');
 				}
 				if (length > 0 && (np < 0 || iid < length)) continue;
+				//
+				if (dotIndex >= 0) {
+					if (caps == null) caps = [];
+					caps[remap.dotIndex] = dotkString;
+				}
 				// process code inside captures (to allow nesting):
 				if (caps != null) for (i in 0 ... caps.length) {
 					if (caps[i] != null) caps[i] = proc(caps[i].trim(), ctx);
@@ -248,14 +314,24 @@ class VitGML {
 					for (imp in remap.dependants) imp.include();
 				}
 				// flush and print rule output:
-				flush(at);
+				flush(dotIndex >= 0 ? dotkPos : at);
 				if (debug) {
 					trace("replace", remap.outputs, caps);
-					Sys.getChar(true);
+					//Sys.getChar(true);
 				}
 				for (item in remap.outputs) switch (item) {
 					case Text(s): out.add(s);
 					case Capture(i): out.add(caps[i]);
+					case CaptureSetOp(i): {
+						var cap = caps[i];
+						if (cap != null && !cap.endsWith("=")) cap += "=";
+						out.add(cap);
+					};
+					case CaptureBinOp(i): {
+						var cap = caps[i];
+						if (cap != null && cap.endsWith("=")) cap = cap.substr(0, cap.length - 1);
+						out.add(cap);
+					};
 				}
 				pos = np;
 				start = np;
@@ -399,7 +475,7 @@ class VitGML {
 				case "[".code: { // possibly an array literal
 					var lp = at;
 					var isLiteral = false;
-					while (--lp >= 0) {
+					while (--lp >= 0) { // walk back to see if it's really a literal
 						c = src.fastCodeAt(lp);
 						switch (c) {
 							case " ".code, "\t".code, "\r".code, "\n".code: {};
@@ -434,11 +510,7 @@ class VitGML {
 				case _ if (c.isIdent0()): {
 					while (pos < len) {
 						c = src.fastCodeAt(pos);
-						if (c == "_".code
-							|| c >= "a".code && c <= "z".code 
-							|| c >= "0".code && c <= "9".code 
-							|| c >= "A".code && c <= "Z".code 
-						) {
+						if (inline c.isIdent1()) {
 							pos++;
 						} else break;
 					}
