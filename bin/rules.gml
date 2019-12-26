@@ -64,8 +64,8 @@ remap(stat) $1.sprite_index = $2 -> sprite_index_set($1, $2)
 remap(self,stat) sprite_index = $1 -> sprite_index_set(id, $1)
 
 // why would you
-//remap $1.sprite_index ${2:aop} $3 -> sprite_index_post(sprite_index_pre($1) ${2:op} $3)
-//remap sprite_index ${1:aop} $2 -> sprite_index_post(sprite_index_pre(id) ${1:op} $2)
+//remap(stat) $1.sprite_index ${2:aop} $3 -> sprite_index_post(sprite_index_pre($1) ${2:op} $3)
+//remap(self,stat) sprite_index ${1:aop} $2 -> sprite_index_post(sprite_index_pre(id) ${1:op} $2)
 
 remap(stat) $1.image_speed ${2:aop} $3 -> image_speed_post(image_speed_pre($1) ${2:op} $3)
 remap(stat) $1.image_speed ${set} $2 -> image_speed_set($1, $2)
