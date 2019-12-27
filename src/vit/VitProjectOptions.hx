@@ -21,7 +21,7 @@ class VitProjectOptions {
 			SfGmx.parse(File.getContent(outPath));
 		} catch (_:Dynamic) {
 			trace("No config available, copying default");
-			var defPath = Main.dir + "/compatibility.gmx/Configs/Default.config.gmx";
+			var defPath = GMVitalizer.dir + "/compatibility.gmx/Configs/Default.config.gmx";
 			var template = File.getContent(defPath);
 			template = template.replace('compProjectName', pj.outName);
 			SfGmx.parse(template);

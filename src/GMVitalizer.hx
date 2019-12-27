@@ -6,7 +6,7 @@ import sys.io.File;
  * ...
  * @author YellowAfterlife
  */
-class Main {
+class GMVitalizer {
 	public static var dir:String;
 	static function proc(from:String, to:String) {
 		Ruleset.init();
