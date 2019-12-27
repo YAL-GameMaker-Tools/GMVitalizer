@@ -32,7 +32,7 @@ class VitIncludedFile {
 		q2.addFloatChild("CopyToMask", q.CopyToMask);
 		q0.addTextChild("filename", q.fileName);
 		//
-		if (!Params.ignoreResourceType["datafile"]) {
+		if (!Params.ignoreResourceType["datafilesrc"]) {
 			var pj = VitProject.current;
 			var dstDir = pj.outDir + "/datafiles";
 			for (rel in chain.slice(1)) {
