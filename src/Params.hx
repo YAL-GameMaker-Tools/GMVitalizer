@@ -12,6 +12,10 @@ class Params {
 		var i = 0;
 		while (i < args.length) {
 			switch (args[i]) {
+				case "--rules": {
+					Ruleset.mainPath = args[i + 1];
+					args.splice(i, 2);
+				};
 				case "--bkrx": {
 					backgroundRegex.push(new EReg(args[i + 1], ""));
 					args.splice(i, 2);

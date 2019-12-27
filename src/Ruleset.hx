@@ -14,6 +14,7 @@ using tools.ERegTools;
  * @author YellowAfterlife
  */
 class Ruleset {
+	public static var mainPath:String = null;
 	public static var remapList:Array<RemapRule> = [];
 	
 	/**
@@ -47,7 +48,9 @@ class Ruleset {
 		for (imp in arr) if (!imp.isIncluded) imp.include();
 	}
 	public static function init() {
-		var raw = File.getContent("rules.gml");
+		var rawPath = mainPath;
+		if (rawPath == null) rawPath = GMVitalizer.dir + "/rules.gml";
+		var raw = File.getContent(rawPath);
 		raw = raw.replace("\r\n", "\n");
 		var rxWord = ~/\w+/g;
 		//
