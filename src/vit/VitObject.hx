@@ -171,7 +171,7 @@ class VitObject {
 }
 typedef VitObjectEvent = {
 	type:Int,
-	numb:Int,
+	numb:Null<Int>,
 	name:String,
 	code:String,
 };

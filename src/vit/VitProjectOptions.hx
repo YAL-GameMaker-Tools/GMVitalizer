@@ -177,13 +177,13 @@ private typedef VitOptTxG = {
 	id:YyGUID,
 	modelName:String,
 	mvc:String,
-	groupName:String,
-	targets:ConfigTargets,
-	autocrop:Bool,
-	border:Int,
-	groupParent:YyGUID,
-	mipsToGenerate:Int,
-	scaled:Bool
+	?groupName:String,
+	?targets:ConfigTargets,
+	?autocrop:Bool,
+	?border:Int,
+	?groupParent:YyGUID,
+	?mipsToGenerate:Int,
+	?scaled:Bool
 };
 private typedef VitOptTxGDelta = {
 	textureGroups:{
