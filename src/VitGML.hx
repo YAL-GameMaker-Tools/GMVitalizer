@@ -130,74 +130,9 @@ class VitGML {
 			var at = pos;
 			var c = src.fastCodeAt(pos++);
 			switch (c) {
-				case "\r".code, "\n".code: {
-					if (isInVarDecl) {
-						// no need to worry about semicolons if not followed by an identifier
-						var np = pos;
-						while (np < len) {
-							c = src.fastCodeAt(np++);
-							switch (c) {
-								case " ".code, "\t".code, "\r".code, "\n".code: continue;
-								case "/".code: { // comments
-									if (np < len) switch (src.fastCodeAt(np)) {
-										case "/".code: np = src.skipLine(np + 1);
-										case "*".code: np = src.skipComment(np + 1);
-									}
-								};
-								default: {
-									if (!c.isIdent0()) {
-										isInVarDecl = false;
-									}
-									break;
-								}
-							}
-						}
-					}
-					if (isInVarDecl) {
-						var lp = commentAt >= 0 ? commentAt : at;
-						var needsSemico = false;
-						while (--lp >= 0) {
-							var c = src.fastCodeAt(lp);
-							switch (c) {
-								case " ".code, "\t".code: continue;
-								case ",".code, "[".code, "(".code,
-									// operators:
-									"+".code, "-".code, "*".code, "/".code, "%".code,
-									"<".code, ">".code, "=".code, "!".code,
-									"|".code, "&".code, "^".code
-								: break;
-								case _ if (c.isIdent1()): {
-									var np = lp;
-									while (--np >= 0) {
-										c = src.fastCodeAt(np);
-										if (!c.isIdent1()) break;
-									}
-									var id = src.substring(np + 1, lp + 1);
-									switch (id) {
-										case "and", "or", "xor", "not", "var": {};
-										default: needsSemico = true;
-									}
-									break;
-								};
-								default: needsSemico = true; break;
-							}
-						} // backtracking to first meaningful character
-						if (needsSemico) {
-							flush(lp + 1);
-							out.addChar(";".code);
-							start = lp + 1;
-						}
-						isInVarDecl = false;
-					}
-					commentAt = -1;
-				};
-				case ";".code: isInVarDecl = false;
 				case "/".code: { // comments
 					if (pos < len) switch (src.fastCodeAt(pos)) {
-						case "/".code: {
-							commentAt = at;
-							pos = src.skipLine(pos + 1);
-						};
+						case "/".code: pos = src.skipLine(pos + 1);
 						case "*".code: pos = src.skipComment(pos + 1);
 					}
 				};
@@ -211,7 +146,40 @@ class VitGML {
 				case _ if (c.isIdent0()): {
 					pos = src.skipIdent1(pos);
 					var id = src.substring(at, pos);
-					if (id == "var") isInVarDecl = true;
+					if (id != "var") continue;
+					while (pos < len) {
+						pos = src.skipBlanks(pos);
+						if (!src.fastCodeAt(pos).isIdent0()) break;
+						var nameStart = pos;
+						pos = src.skipIdent1(pos);
+						var name = src.substring(nameStart, pos);
+						if (StringToolsEx.statementKeywords[name]) break;
+						var till = pos;
+						pos = src.skipBlanks(pos);
+						//
+						c = src.fastCodeAt(pos);
+						if (c == "=".code) {
+							pos += 1;
+							pos = src.skipExpr(pos);
+							till = pos;
+							pos = src.skipBlanks(pos);
+							c = src.fastCodeAt(pos);
+						}
+						//
+						if (c == ",".code) {
+							pos++;
+							continue;
+						} else if (c.isIdent0()) {
+							var afterStart = pos;
+							var afterPos = src.skipIdent1(pos);
+							var after = src.substring(afterPos, pos);
+							if (StringToolsEx.statementKeywords[after]) break;
+							flush(till);
+							out.addChar(";".code);
+							start = till;
+							break;
+						} else break;
+					}
 				};
 			}
 		}

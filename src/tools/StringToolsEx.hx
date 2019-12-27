@@ -123,6 +123,27 @@ class StringToolsEx {
 		return skipWhile(src, pos, (c, _) -> inline c.isHexDigit());
 	}
 	
+	/** Skips spaces and comments */
+	public static function skipBlanks(src:String, pos:StringPos):StringPos {
+		var len = src.length;
+		while (pos < len) {
+			var at = pos;
+			var c = src.fastCodeAt(pos++);
+			switch (c) {
+				case " ".code, "\t".code, "\r".code, "\n".code: {};
+				case "/".code: {
+					if (pos < len) switch (src.fastCodeAt(pos)) {
+						case "/".code: pos = src.skipLine(pos + 1);
+						case "*".code: pos = src.skipComment(pos + 1);
+						default: return at;
+					} else return at;
+				};
+				default: return at;
+			}
+		}
+		return pos;
+	}
+	
 	public static function skipNumber(src:String, pos:StringPos, canDot:Bool = true):StringPos {
 		var c = src.fastCodeAt(pos);
 		var len = src.length;
