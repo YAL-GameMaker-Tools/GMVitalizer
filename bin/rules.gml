@@ -77,7 +77,7 @@ remap(self,expr) image_speed -> image_speed_get(id)
 //}
 
 //{ misc
-remap string_hash_to_newline($1) -> $1
+remap string_hash_to_newline($1) -> ($1)
 //}
 
 //{ layers
