@@ -43,6 +43,7 @@
       </scripts>
       <scripts name="Tileset">
         <script>scripts\tileset_create.gml</script>
+        <script>scripts\tileset_add_animation.gml</script>
       </scripts>
       <scripts name="Tile">
         <script>scripts\tile_get_index.gml</script>
@@ -54,7 +55,9 @@
         <script>scripts\tilemap_get_cell_x_at_pixel.gml</script>
         <script>scripts\tilemap_get_cell_y_at_pixel.gml</script>
         <script>scripts\tilemap_get.gml</script>
+        <script>scripts\tilemap_get_at_pixel.gml</script>
         <script>scripts\tilemap_set.gml</script>
+        <script>scripts\tilemap_set_at_pixel.gml</script>
       </scripts>
       <scripts name="Background">
         <script>scripts\layer_background_create.gml</script>

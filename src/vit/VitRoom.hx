@@ -140,6 +140,7 @@ class VitRoom {
 		var instMap = new Map<YyGUID, YyRoomInstance>();
 		var instGmx = new Map<YyGUID, SfGmx>();
 		var vl:String = null, vb:String = null;
+		var v_tileset:String = null;
 		function printLayerRec(l:YyRoomLayer):Void {
 			if (l.modelName == "GMRLayer") {
 				for (l1 in l.layers) printLayerRec(l1);
@@ -243,6 +244,11 @@ class VitRoom {
 						return;
 					}
 					Ruleset.includeIdent("layer_tilemap_create");
+					if (v_tileset == null) {
+						v_tileset = "v_tileset";
+						cc.add("var ");
+					}
+					cc.addFormat("%s = ", v_tileset);
 					cc.addFormat("layer_tilemap_create(%s, %f, %f, %s, %d, %d);\r\n",
 						vl, l.x, l.y, ts.name, l.tiles.SerialiseWidth, l.tiles.SerialiseHeight
 					);
@@ -255,6 +261,8 @@ class VitRoom {
 					var tilePadY = ts.tilePadY;
 					var tileMulX = ts.tileMulX;
 					var tileMulY = ts.tileMulY;
+					//
+					var tileAnimInit = new StringBuilder();
 					for (tpos in 0 ... td.length) {
 						var tileBits = Std.int(td[tpos] % VitTileset.maskMax);
 						var tileIndex = tileBits & VitTileset.maskIndex;
@@ -264,6 +272,7 @@ class VitRoom {
 						//
 						var tx = l.x + (tpos % tmod) * tileWidth;
 						var ty = l.x + Std.int(tpos / tmod) * tileHeight;
+						var otx = tx, oty = ty;
 						var tileFlip = (tileBits & VitTileset.maskFlip) != 0;
 						var tileMirror = (tileBits & VitTileset.maskMirror) != 0;
 						if (tileFlip) ty += tileHeight;
@@ -277,12 +286,27 @@ class VitRoom {
 						rt.setInt("yo", tilePadY + tileMulY * Std.int(tileIndex / tileCols));
 						var rtId = pj.nextTileIndex++;
 						rt.setInt("id", rtId);
-						rt.set("name", "__tile_" + rtId);
+						var tileName = "__tile_" + rtId;
+						rt.set("name", tileName);
 						rt.setInt("depth", lz);
 						rt.setInt("locked", 0);
 						rt.set("colour", "4294967295");
 						rt.setInt("scaleX", tileMirror ? -1 : 1);
 						rt.setInt("scaleY", tileFlip ? -1 : 1);
+						//
+						if (ts.tileIsAnimated[tileIndex]) {
+							//tileAnimInit.addFormat(", %d", rtId);
+							//tileAnimInit.addFormat(", %s", tileName);
+							// apparently this never worked and never will
+							// https://forum.yoyogames.com/index.php?threads/get-tile-id-by-name.3741/
+							tileAnimInit.addFormat(", tile_layer_find(%d, %f, %f)",
+								lz, otx + tileWidth / 2, oty + tileHeight / 2);
+						}
+					}
+					//
+					if (tileAnimInit.length > 0) {
+						cc.addFormat("ds_list_add(%s.tileAnimList%s);\r\n",
+							v_tileset, tileAnimInit.toString());
 					}
 				};
 				default: trace("Can't convert " + l.modelName);

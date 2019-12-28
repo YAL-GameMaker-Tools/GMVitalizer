@@ -27,6 +27,11 @@
             <kind>1</kind>
             <string>/// A tilemap element
 event_inherited();
+tileSet = -1;
+tileCols = 0;
+tileRows = 0;
+tileAnimList = ds_list_create();
+tileAnimCounter = 0;
 </string>
           </argument>
         </arguments>
@@ -50,7 +55,109 @@ event_inherited();
           <argument>
             <kind>1</kind>
             <string>tile_layer_delete(depth);
-
+event_perform(ev_alarm, 99);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="2" enumb="99">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>ds_list_destroy(tileAnimList);
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="3" enumb="0">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>var l_ts/*:gmv_tileset_t*/ = tileSet;
+if (!is_array(l_ts)) exit;
+if (l_ts[gmv_tileset_t.tilesetHasAnim]) {
+	// TODO: Turns out GMS2 animated tiles DO NOT change indexes!
+	// But I don't want to rewrite all of this just for that, no sir
+	tileAnimCounter += (1 / room_speed) / (1 / l_ts[gmv_tileset_t.tileAnimSpeed]);
+	var amt = floor(tileAnimCounter);
+	if (amt) {
+		tileAnimCounter -= amt;
+		var l_iter = -1;
+		var l_tileCycles = l_ts[gmv_tileset_t.tileCycles];
+		var l_tileCount = l_ts[gmv_tileset_t.tileCount];
+		var l_tc = l_ts[gmv_tileset_t.tileCols];
+		var l_sx = l_ts[gmv_tileset_t.tileSepX];
+		var l_sy = l_ts[gmv_tileset_t.tileSepY];
+		var l_mx = l_ts[gmv_tileset_t.tileMulX];
+		var l_my = l_ts[gmv_tileset_t.tileMulY];
+		var l_tw = l_ts[gmv_tileset_t.tileWidth];
+		var l_th = l_ts[gmv_tileset_t.tileHeight];
+		//
+		repeat (ds_list_size(tileAnimList)) {
+			var l_tile = tileAnimList[|++l_iter];
+			var l_tile_index = ((tile_get_left(l_tile) - l_ts[gmv_tileset_t.tileSepX]) div l_ts[gmv_tileset_t.tileMulX]
+				+ ((tile_get_top(l_tile) - l_ts[gmv_tileset_t.tileSepY]) div l_ts[gmv_tileset_t.tileMulY]) * l_ts[gmv_tileset_t.tileCols]
+			) &amp; gmv_tile.maskIndex;
+			if (l_tile_index &gt; l_tileCount) continue;
+			l_tile_index = l_tileCycles[l_tile_index];
+			var l_tl = l_sx + (l_tile_index mod l_tc) * l_mx;
+			var l_tt = l_sy + (l_tile_index div l_tc) * l_my;
+			tile_set_region(l_tile, l_tl, l_tt, l_tw, l_th);
+		}
+		var l_count = ds_list_size(tileAnimList);
+	}
+}
+</string>
+          </argument>
+        </arguments>
+      </action>
+    </event>
+    <event eventtype="7" enumb="5">
+      <action>
+        <libid>1</libid>
+        <id>603</id>
+        <kind>7</kind>
+        <userelative>0</userelative>
+        <isquestion>0</isquestion>
+        <useapplyto>-1</useapplyto>
+        <exetype>2</exetype>
+        <functionname></functionname>
+        <codestring></codestring>
+        <whoName>self</whoName>
+        <relative>0</relative>
+        <isnot>0</isnot>
+        <arguments>
+          <argument>
+            <kind>1</kind>
+            <string>if (!persistent) event_perform(ev_alarm, 99);
 </string>
           </argument>
         </arguments>

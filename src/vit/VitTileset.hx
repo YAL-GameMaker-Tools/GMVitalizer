@@ -1,5 +1,6 @@
 package vit;
 import yy.*;
+import haxe.ds.Vector;
 import haxe.io.Path;
 import sys.io.File;
 import tools.Alias;
@@ -31,6 +32,8 @@ class VitTileset {
 	public var tilePadY:Int;
 	public var tileMulX:Int;
 	public var tileMulY:Int;
+	public var tileCycles:Array<Array<Int>> = [];
+	public var tileIsAnimated:Vector<Bool>;
 	public function new() {
 		
 	}
@@ -48,7 +51,12 @@ class VitTileset {
 		t.tileMulY = t.tilePadY * 2 + t.tileHeight;
 		t.tileCount = q.tile_count;
 		t.tileCols = q.out_columns;
+		t.tileIsAnimated = new Vector(q.tile_count);
 		t.tileset = q;
+		for (f in q.tile_animation_frames) {
+			t.tileCycles.push(f.frames);
+			for (i in f.frames) t.tileIsAnimated[i] = true;
+		}
 		//
 		var pj = VitProject.current;
 		pj.tilesets[q.id] = t;
@@ -89,10 +97,19 @@ class VitTileset {
 		var rb = pj.tilesetInit;
 		var ts = t.name;
 		rb.addFormat("globalvar %s; ", ts);
-		rb.addFormat("%s = tileset_create(%s, %d,%d, %d,%d, %d,%d);\r\n",
+		rb.addFormat("%s = tileset_create(%s, %d,%d, %d,%d, %d,%d, %f);\r\n",
 			ts, t.background,
 			t.tileCount, t.tileCols,
 			t.tileWidth, t.tileHeight,
-			t.tilePadX, t.tilePadY);
+			t.tilePadX, t.tilePadY,
+			t.tileset.tile_animation_speed
+		);
+		for (set in t.tileCycles) {
+			rb.addFormat("tileset_add_animation(%s", ts);
+			for (f in set) {
+				rb.addFormat(", %f", f);
+			}
+			rb.addFormat(");\r\n");
+		}
 	}
 }

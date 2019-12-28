@@ -33,7 +33,7 @@ typedef YyTileset = {
 		frames:Array<Int>,
 		name:String
 	}>,
-	tile_animation_speed:Int,
+	tile_animation_speed:Float,
 	tile_count:Int,
 	tileheight:Int,
 	tilehsep:Int,

@@ -1,5 +1,5 @@
-/// tileset_create(background, t_count, t_cols, t_width, t_height, t_sep_x, t_sep_y)
-var l_background = argument0, l_count = argument1, l_cols = argument2, l_width = argument3, l_height = argument4, l_sep_x = argument5, l_sep_y = argument6;
+/// tileset_create(background, t_count, t_cols, t_width, t_height, t_sep_x, t_sep_y, t_animation_speed)
+var l_background = argument0, l_count = argument1, l_cols = argument2, l_width = argument3, l_height = argument4, l_sep_x = argument5, l_sep_y = argument6, t_animation_speed = argument7;
 enum gmv_tileset_t {
 	tileBack,
 	tileCount,
@@ -11,6 +11,10 @@ enum gmv_tileset_t {
 	tileSepY,
 	tileMulX,
 	tileMulY,
+	tileCycles,
+	tileIsAnimated,
+	tileAnimSpeed,
+	tilesetHasAnim,
 	sizeof,
 };
 var l_tileset/*:gmv_tileset_t*/ = array_create(gmv_tileset_t.sizeof);
@@ -24,4 +28,8 @@ l_tileset[@gmv_tileset_t.tileSepX] = l_sep_x;
 l_tileset[@gmv_tileset_t.tileSepY] = l_sep_y;
 l_tileset[@gmv_tileset_t.tileMulX] = l_sep_x * 2 + l_width;
 l_tileset[@gmv_tileset_t.tileMulY] = l_sep_y * 2 + l_height;
+l_tileset[@gmv_tileset_t.tileIsAnimated] = array_create(l_count);
+l_tileset[@gmv_tileset_t.tileCycles] = array_create(l_count);
+l_tileset[@gmv_tileset_t.tileAnimSpeed] = t_animation_speed;
+l_tileset[@gmv_tileset_t.tilesetHasAnim] = false;
 return l_tileset;
