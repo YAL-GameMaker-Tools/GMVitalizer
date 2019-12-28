@@ -13,6 +13,8 @@
   <scripts name="scripts">
     <scripts name="Syntax">
       <script>scripts\gmv_array.gml</script>
+      <script>scripts\tern_set.gml</script>
+      <script>scripts\tern_get.gml</script>
     </scripts>
     <scripts name="Misc">
       <script>scripts\game_get_speed.gml</script>

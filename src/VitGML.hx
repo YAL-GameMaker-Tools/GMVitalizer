@@ -3,6 +3,7 @@ using StringTools;
 using tools.StringToolsEx;
 import Ruleset;
 import tools.Alias;
+import tools.StringBuilder;
 
 /**
  * GMS2-GML -> GMS1-GML conversion
@@ -189,27 +190,85 @@ class VitGML {
 		return out.toString();
 	}
 	
-	public static function fixTernaryOperators():Void {
-		/*
-		Detection: Upon encountering a `?`,
-		we must backtrack to find the start of the expression (`=:[(`, some ops...) 
-		and also forward-track to find the end of expression (`)];`, what else)
+	/**
+	 * No ternaries in GMS1 but we can convert
+	 * (a ? b : c) -> tern_get((a) && tern_set(b) || tern_set(c))
+	 * And this will actually work as expected.
+	 */
+	public static function replaceTernaryOperators(src:String):String {
+		var isReady = false;
+		var out = new StringBuilder();
+		var pos = 0;
+		var len = src.length;
+		var start = 0;
 		
-		Implementation:
-		a ? b : c -> tern_get(a && tern_set(b) || tern_set(c))
-		where
-		tern_set(x) => global.tern_value = x; return true;
-		tern_get(_) => return global.tern_value;
+		#if !debug inline #end
+		function flush(till:Int):Void {
+			//if (till < start) throw 'illegal flush ($till<$start) `${src.substring(0, till)}`';
+			//out.add(src.substring(start, till));
+			out.addSub(src, start, till - start);
+		}
 		
-		Specifics: Writing a good expression skipper is inherently unexciting, maybe adapt one
-		from GMEdit's linter or something.
-		*/
+		while (pos < len) {
+			var at = pos;
+			var c = src.fastCodeAt(pos++);
+			switch (c) {
+				case "/".code: { // comments
+					if (pos < len) switch (src.fastCodeAt(pos)) {
+						case "/".code: {
+							pos = src.skipLine(pos + 1);
+							flush(pos);
+							out.addChar(commentEOL);
+							start = pos;
+						};
+						case "*".code: pos = src.skipComment(pos + 1);
+					}
+				};
+				case '@'.code: { // possibly string literals
+					c = src.fastCodeAt(pos++);
+					if (c == '"'.code || c == "'".code) { // it's them
+						pos = src.skipString1(pos, c);
+					}
+				};
+				case '"'.code: pos = src.skipString2(pos);
+				case "?".code: do {
+					if (src.fastCodeAt(src.skipSpaceBackwards(at)) == "[".code) break;
+					var condStart = src.skipExprBackwards(at, true);
+					var condEnd = src.skipSpaceBackwards(at) + 1;
+					var thenStart = src.skipBlanks(pos);
+					var thenEnd = src.skipExpr(thenStart);
+					var colPos = src.skipBlanks(thenEnd);
+					if (src.fastCodeAt(colPos) != ":".code) break;
+					var elseStart = src.skipBlanks(colPos + 1);
+					var elseEnd = src.skipExpr(elseStart);
+					if (!isReady) {
+						isReady = true;
+						Ruleset.includeIdent("gmv_tern_get");
+						Ruleset.includeIdent("gmv_tern_set");
+					}
+					flush(condStart);
+					//
+					out.addFormat("tern_get((%s) && tern_set(%s) || tern_set(%s))",
+						replaceTernaryOperators(src.substring(condStart, condEnd)),
+						replaceTernaryOperators(src.substring(thenStart, thenEnd)),
+						replaceTernaryOperators(src.substring(elseStart, elseEnd))
+					);
+					pos = elseEnd;
+					start = pos;
+				} while (false);
+			}
+		}
+		
+		if (start == 0) return src;
+		flush(pos);
+		return out.toString();
 	}
 	
 	public static function proc(src:String, ctx:String):String {
 		src = escapeComments(src);
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
+		src = replaceTernaryOperators(src);
 		
 		var out = new StringBuf();
 		var pos = 0;

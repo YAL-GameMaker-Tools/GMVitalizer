@@ -123,6 +123,15 @@ class StringToolsEx {
 		return skipWhile(src, pos, (c, _) -> inline c.isHexDigit());
 	}
 	
+	/** `a  ¦b` -> `a¦  b` */
+	public static function skipSpaceBackwards(src:String, pos:StringPos):StringPos {
+		while (--pos >= 0) {
+			var c = src.fastCodeAt(pos);
+			if (!inline isSpace0(c)) return pos;
+		}
+		return 0;
+	}
+	
 	/** Skips spaces and comments */
 	public static function skipBlanks(src:String, pos:StringPos):StringPos {
 		var len = src.length;
@@ -162,13 +171,13 @@ class StringToolsEx {
 	}
 	
 	/**
-	 * 
-	 * @return	new position
+	 * `var a =¦ 1 b` -> `var a = 1¦ b`
 	 */
 	public static function skipExpr(src:String, pos:StringPos):StringPos {
 		var start = pos;
 		var len = src.length;
 		var depth = 0;
+		var ternDepth = 0;
 		var kind = 0; // 0: not, 1: value, 2: await value, 3: value no trouble
 		var result = pos;
 		while (pos < len) {
@@ -189,9 +198,21 @@ class StringToolsEx {
 				case ")".code, "]".code, "}".code: {
 					// closing brackets
 					if (--depth < 0) return result;
+					// this prevents us from mis-triggering when ']' follows an ident
 					kind = 3;
 				};
 				case ",".code: if (depth <= 0) return result;
+				case "?".code: {
+					var lp = src.skipSpaceBackwards(at);
+					if (src.fastCodeAt(lp) != "[".code) {
+						ternDepth++;
+					}
+				};
+				case ":".code: {
+					if (ternDepth > 0) {
+						ternDepth--;
+					} else return result;
+				};
 				case ";".code: return result;
 				case "@".code: {
 					c = src.fastCodeAt(pos++);
@@ -254,6 +275,80 @@ class StringToolsEx {
 			}
 		}
 		//trace("eof", src.substring(start));
+		return result;
+	}
+	
+	/**
+	 * `var a = b ¦? c : d` -> `var a = ¦b ? c : d`
+	 * Can only do inline expressions, no statements
+	 */
+	public static function skipExprBackwards(src:String, pos:StringPos, tern:Bool = false):StringPos {
+		var depth = 0;
+		var result = pos;
+		while (--pos >= 0) {
+			var c = src.fastCodeAt(pos);
+			if (inline isSpace0(c)) continue;
+			switch (c) {
+				case '"'.code: {
+					while (--pos >= 0) {
+						if (src.fastCodeAt(pos) == '"'.code
+						&& src.fastCodeAt(pos - 1) != "\\".code) break;
+					}
+				};
+				case "'".code: {
+					while (--pos >= 0) {
+						if (src.fastCodeAt(pos) == "'".code) break;
+					}
+				};
+				case ")".code, "]".code: depth++;
+				case "(".code, "[".code: {
+					if (--depth < 0) return result;
+				};
+				case "/".code: {
+					if (src.fastCodeAt(--pos) == "*".code) { // comment
+						pos--;
+						while (--pos >= 0) {
+							if (src.fastCodeAt(pos) == "*".code
+								&& src.fastCodeAt(pos - 1) == "/".code
+							) {
+								pos--;
+							}
+						}
+					}
+				};
+				case VitGML.commentEOL: {
+					while (--pos >= 0) {
+						if (src.fastCodeAt(pos) == "/".code
+							&& src.fastCodeAt(pos - 1) == "/".code
+						) pos--;
+					}
+				};
+				case "=".code: {
+					if (tern) {
+						if (isStatementBacktrack(src, pos)) {
+							return result;
+						}
+						if (src.fastCodeAt(pos - 1) == "=".code) pos--;
+					} else if (depth <= 0) {
+						return result;
+					}
+				};
+				case _ if (c.isIdent1()): {
+					var till = pos + 1;
+					while (pos > 0) {
+						if (src.fastCodeAt(pos - 1).isIdent1()) pos--; else break;
+					}
+					var id = src.substring(pos, till);
+					switch (id) {
+						case "if", "while", "until", "repeat", "switch", "case", "return": {
+							return result;
+						}
+						default: {};
+					}
+				};
+			}
+			result = pos;
+		}
 		return result;
 	}
 	
@@ -346,9 +441,6 @@ class StringToolsEx {
 						}
 					}
 				};
-				case ".".code: {
-					
-				};
 				case"|".code, "^".code, "&".code,
 					"*".code, "%".code,
 					">".code, "<".code,
@@ -360,7 +452,7 @@ class StringToolsEx {
 					}
 					var id = src.substring(pos, till);
 					return switch (id) {
-						case "if", "while", "until", "repeat", "switch", "case": false;
+						case "if", "while", "until", "repeat", "switch", "case", "return": false;
 						default: !operatorKeywords[id];
 					}
 				};
