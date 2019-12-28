@@ -465,6 +465,7 @@ class VitGML {
 							case "n".code: esc = "\n".code; note = "\\n";
 							case "t".code: esc = "\t".code; note = "\\t";
 							case "\\".code: esc = "\\".code; note = "\\";
+							case '"'.code: esc = '"'.code; note = '"';
 							case "\r".code, "\n".code: esc = -1;
 							default: throw 'Escape character $c `'
 								+ String.fromCharCode(c) + "` is not supported.";
