@@ -53,6 +53,7 @@ remap gpu_set_blendenable -> draw_enable_alphablend
 remap gpu_set_colourwriteenable -> draw_set_colour_write_enable
 remap gpu_set_colorwriteenable -> draw_set_color_write_enable
 remap gpu_set_alphatestenable -> draw_set_alpha_test
+remap vertex_format_add_texcoord -> vertex_format_add_textcoord
 //}
 
 //{ instances
