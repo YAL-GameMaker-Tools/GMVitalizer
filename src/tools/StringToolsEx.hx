@@ -308,7 +308,18 @@ class StringToolsEx {
 			switch (c) {
 				case '"'.code, "'".code: return true;
 				case ")".code, "]".code, "{".code, "}".code: return true;
-				case "(".code, "[".code: return false;
+				case "[".code: return false;
+				case "(".code: { // only `for (` is OK
+					while (--pos >= 0) {
+						c = src.fastCodeAt(pos);
+						if (isSpace0(c)) continue;
+						return pos >= 3 && c == "r".code
+							&& src.fastCodeAt(pos - 1) == "o".code
+							&& src.fastCodeAt(pos - 2) == "f".code
+							&& (pos == 3 || !src.fastCodeAt(pos - 3).isIdent1());
+					}
+					return true;
+				};
 				case "+".code, "-".code: {
 					if (src.fastCodeAt(--pos) == c) { //++thing?
 						// keep going
