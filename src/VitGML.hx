@@ -268,7 +268,7 @@ class VitGML {
 		src = escapeComments(src);
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
-		src = replaceTernaryOperators(src);
+		if (src.indexOf("?") >= 0) src = replaceTernaryOperators(src);
 		
 		var out = new StringBuf();
 		var pos = 0;
@@ -603,6 +603,13 @@ class VitGML {
 							start = ++pos;
 						}
 					}
+				};
+				case "0".code if (src.fastCodeAt(pos) == "x".code): {
+					pos = src.skipHexDigits(pos + 1);
+					flush(at);
+					out.addChar("$".code);
+					out.addSub(src, at + 2, pos - at - 2);
+					start = pos;
 				};
 				case _ if (c.isIdent0()): {
 					while (pos < len) {
