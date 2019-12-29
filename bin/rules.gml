@@ -79,6 +79,8 @@ remap(self,expr) image_speed -> image_speed_get(id)
 
 //{ misc
 remap string_hash_to_newline($1) -> ($1)
+remap array_create($1, $2) -> gmv_array_create($1, $2)
+import gmv_array_create_fwd if gmv_array_create
 //}
 
 //{ layers
