@@ -97,6 +97,7 @@ class VitProject {
 		for (_ in 0 ... 2) outName = Path.withoutExtension(outName);
 		var dir = Path.directory(to);
 		outDir = dir;
+		if (!FileSystem.exists(outDir)) FileSystem.createDirectory(outDir);
 		//
 		Sys.println("Printing...");
 		var gmx = new SfGmx("assets"), q:SfGmx;
@@ -110,7 +111,7 @@ class VitProject {
 		q.addTextChild("Config", "Configs\\Default");
 		var datafiles = addCat("datafiles", "datafiles");
 		var datafileCount = 0;
-		gmx.addEmptyChild("NewExtensions");
+		var extensions = gmx.addEmptyChild("NewExtensions");
 		addCat("sounds", "sound");
 		addCat("sprites", "sprites");
 		addCat("backgrounds", "background");
@@ -237,7 +238,12 @@ class VitProject {
 			var yyPath = pair.Value.resourcePath;
 			var yyFull = Path.join([projectDir, yyPath]);
 			var yy:Dynamic = try {
-				Json.parse(File.getContent(yyFull));
+				var text = File.getContent(yyFull);
+				if (single == "extension") {
+					text = ~/(\n[ \t]*"copyToTargets":[ \t]*)(\d+)([\r\n,])/g
+						.replace(text, '$1"$2"$3');
+				}
+				Json.parse(text);
 			} catch (x:Dynamic) {
 				Sys.println('Error loading $yyPath: $x');
 				return;
@@ -282,10 +288,16 @@ class VitProject {
 						default: "GLSL";
 					});
 				};
+				case "extension": {
+					VitExtension.proc(name, yy, yyFull, outPath);
+					gmxItem.setInt("index", extensions.children.length);
+					extensions.addChild(gmxItem);
+					gmxItem = null;
+				};
 				default: return;
 			}
 			//
-			addAssetNode(chain, gmxItem, plural);
+			if (gmxItem != null) addAssetNode(chain, gmxItem, plural);
 			//trace(pair.Value.resourcePath, single, chain);
 		}
 		function printFolder(fd:YyView, chain:Array<String>):Void {
