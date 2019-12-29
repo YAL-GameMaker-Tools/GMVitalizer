@@ -376,6 +376,25 @@ class VitProject {
 						new SfGmx("object", 'objects\\$name'),
 						"objects", true);
 				};
+				case "extension": {
+					var extNode = new SfGmx("extension", 'extensions\\$name');
+					extNode.setInt("index", extensions.children.length);
+					extensions.addChild(extNode);
+					//
+					File.copy(imp.path, '$dir\\extensions\\$name.extension.gmx');
+					var extRoot = SfGmx.parse(File.getContent(imp.path));
+					var extInDir = Path.directory(imp.path) + '\\$name';
+					var extOutDir = '$dir\\extensions\\$name';
+					if (!FileSystem.exists(extOutDir)) FileSystem.createDirectory(extOutDir);
+					for (extFile in extRoot.find("files").findAll("file")) {
+						var fname = extFile.findText("filename");
+						try {
+							File.copy(extInDir + '/' + fname, extOutDir + '/' + fname);
+						} catch (x:Dynamic) {
+							trace('Failed to copy $name:$fname: $x');
+						}
+					}
+				};
 				default: Sys.println('Can\'t import ${imp.kind} yet (for $name)');
 			}
 		}

@@ -89,6 +89,7 @@ class Ruleset {
 			"compatibility",
 			"compatibility.gmx/scripts",
 			"compatibility.gmx/objects",
+			"compatibility.gmx/extensions",
 		]) for (rel in FileSystem.readDirectory(dir)) {
 			var full = Path.join([dir, rel]);
 			if (FileSystem.isDirectory(full)) continue;
@@ -118,7 +119,7 @@ class Ruleset {
 			var condList = null;
 			if (condData != null) {
 				condList = [];
-				rxWord.each(rx.matched(1), function(r1:EReg):Void {
+				rxWord.each(rx.matched(2), function(r1:EReg):Void {
 					var s = r1.matched(0);
 					if (s != "or") condList.push(s);
 				});
@@ -137,16 +138,17 @@ class Ruleset {
 							var arr = importsByIdent[cond];
 							if (arr == null) {
 								arr = [];
-								importsByIdent[name] = arr;
+								importsByIdent[cond] = arr;
 							}
 							arr.push(imp);
 						}
 					}
 				} else {
-					Sys.println('Couldn\'t find `$name` referenced in `${rx.matched(0)}`');
+					throw ('Couldn\'t find `$name` referenced in `${rx.matched(0)}`');
 				}
 			}
 		}); // import
+		for (k => v in importsByIdent) if (k.indexOf("y_create") >= 0) trace(k, v);
 		//
 		for (rule in remapList) {
 			rule.index();
