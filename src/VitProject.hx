@@ -9,7 +9,7 @@ import tools.SfGmx;
 import vit.*;
 import tools.StringBuilder;
 import yy.YyProject;
-import Ruleset;
+import rules.*;
 
 /**
  * ...

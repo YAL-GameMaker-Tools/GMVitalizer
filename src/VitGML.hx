@@ -1,7 +1,7 @@
 package;
 using StringTools;
 using tools.StringToolsEx;
-import Ruleset;
+import rules.*;
 import tools.Alias;
 import tools.StringBuilder;
 
