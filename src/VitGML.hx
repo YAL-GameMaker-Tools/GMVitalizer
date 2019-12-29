@@ -195,7 +195,7 @@ class VitGML {
 	 * (a ? b : c) -> tern_get((a) && tern_set(b) || tern_set(c))
 	 * And this will actually work as expected.
 	 */
-	public static function replaceTernaryOperators(src:String):String {
+	static function replaceTernaryOperators(src:String):String {
 		var isReady = false;
 		var out = new StringBuilder();
 		var pos = 0;
@@ -412,7 +412,7 @@ class VitGML {
 											continue;
 										}
 									};
-									// todo: strings, comments
+									// todo: comments
 									default:
 								}
 								if (depth <= 0) {
