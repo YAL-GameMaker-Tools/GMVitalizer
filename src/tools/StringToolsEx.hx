@@ -302,7 +302,12 @@ class StringToolsEx {
 				};
 				case ")".code, "]".code: depth++;
 				case "(".code, "[".code: {
-					if (--depth < 0) return result;
+					if (depth > 0) {
+						depth--;
+					} else return result;
+				};
+				case ",".code: {
+					if (depth <= 0) return result;
 				};
 				case "/".code: {
 					if (src.fastCodeAt(--pos) == "*".code) { // comment
