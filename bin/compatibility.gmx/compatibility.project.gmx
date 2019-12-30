@@ -4,7 +4,7 @@
     <Config>Configs\Default</Config>
   </Configs>
   <NewExtensions>
-    <extension index="0">extensions\gmv_array_create_fwd</extension>
+    <extension index="0">extensions\gmv_array_magic</extension>
   </NewExtensions>
   <sounds name="sound"/>
   <sprites name="sprites"/>
@@ -14,7 +14,6 @@
   <paths name="paths"/>
   <scripts name="scripts">
     <scripts name="Syntax">
-      <script>scripts\gmv_array.gml</script>
       <script>scripts\tern_set.gml</script>
       <script>scripts\tern_get.gml</script>
     </scripts>
