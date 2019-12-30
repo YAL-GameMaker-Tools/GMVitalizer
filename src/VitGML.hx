@@ -234,6 +234,27 @@ class VitGML {
 		return out.toString();
 	}
 	
+	public static function index(src:String, ctx:String) {
+		var pos = 0;
+		var len = src.length;
+		while (pos < len) {
+			var c = src.fastCodeAt(pos++);
+			switch (c) {
+				case "/".code: pos = src.skipSlashCommon(pos);
+				case '@'.code: pos = src.skipAtSignCommon(pos);
+				case '"'.code: pos = src.skipString2(pos);
+				case _ if (c.isIdent0()): {
+					var at = pos - 1;
+					pos = src.skipIdent1(pos);
+					var id = src.substring(at, pos);
+					if (!VitProject.current.apiUses.exists(id)) {
+						VitProject.current.apiUses[id] = true;
+					}
+				};
+			}
+		}
+	}
+	
 	public static function proc(src:String, ctx:String):String {
 		src = escapeComments(src);
 		src = fixSpaces(src);

@@ -52,7 +52,7 @@ class Ruleset {
 		var rawPath = mainPath;
 		if (rawPath == null) rawPath = GMVitalizer.dir + "/rules.gml";
 		var raw = File.getContent(rawPath);
-		raw = raw.replace("\r\n", "\n");
+		raw = RemapPreproc.run(raw);
 		var rxWord = ~/\w+/g;
 		//
 		~/^remap(?:\(([\w, ]+)\))?\s+(?:\$(\d).)?(\w+)(.*?)->\s*(.+)/gm
@@ -149,7 +149,7 @@ class Ruleset {
 				}
 			}
 		}); // import
-		for (k => v in importsByIdent) if (k.indexOf("y_create") >= 0) trace(k, v);
+		//for (k => v in importsByIdent) trace(k, v);
 		//
 		for (rule in remapList) {
 			rule.index();

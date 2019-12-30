@@ -60,7 +60,7 @@ remap vertex_format_add_texcoord -> vertex_format_add_textcoord
 remap instance_destroy($1, $2) -> instance_destroy_ext($1, $2)
 //}
 
-//{ image speeds
+#if gml.sprite_speed
 remap(stat) $1.sprite_index = $2 -> sprite_index_set($1, $2)
 remap(self,stat) sprite_index = $1 -> sprite_index_set(id, $1)
 
@@ -75,7 +75,7 @@ remap(expr) $1.image_speed -> image_speed_get($1)
 remap(self,stat) image_speed ${1:aop} $2 -> image_speed_post(image_speed_pre(id) ${1:op} $2)
 remap(self,stat) image_speed ${set} $1 -> image_speed_set(id, $1)
 remap(self,expr) image_speed -> image_speed_get(id)
-//}
+#end
 
 //{ misc
 remap string_hash_to_newline($1) -> ($1)

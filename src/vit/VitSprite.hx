@@ -10,6 +10,24 @@ import tools.SfGmx;
  * @author YellowAfterlife
  */
 class VitSprite {
+	public static function pre(name:String, q:YySprite) {
+		var pj = VitProject.current;
+		if (q.frames.length > 1) {
+			var sp = q.playbackSpeed;
+			var st = q.playbackSpeedType;
+			if (st == 0 ? sp != pj.gameSpeed : sp != 1) {
+				if (true) {
+					pj.spriteSpeedBuf.addFormat("ds_list_add(l_data, %s, ", q.name);
+					if (st == 0) {
+						pj.spriteSpeedBuf.addFormat("%f/%f", sp, pj.gameSpeed);
+					} else pj.spriteSpeedBuf.addFormat("%f", sp);
+					pj.spriteSpeedBuf.addFormat(");\r\n");
+				} else trace('Sprite $name uses non-standard playback speed ('
+					+ sp + (st == 0 ? '/${pj.gameSpeed}fps' : 'fpf')
+					+ '). Default speed will be used.');
+			}
+		}
+	}
 	public static function proc(name:String, q:YySprite, inPath:String, outPath:String) {
 		Sys.println('Converting $name...');
 		var q0 = new SfGmx("sprite");
@@ -33,22 +51,7 @@ class VitSprite {
 		q0.addIntChild("width", q.width);
 		q0.addIntChild("height", q.height);
 		q1 = q0.addEmptyChild("frames");
-		var pj = VitProject.current;
-		if (q.frames.length > 1) {
-			var sp = q.playbackSpeed;
-			var st = q.playbackSpeedType;
-			if (st == 0 ? sp != pj.gameSpeed : sp != 1) {
-				if (true) {
-					pj.spriteSpeedBuf.addFormat("ds_list_add(l_data, %s, ", q.name);
-					if (st == 0) {
-						pj.spriteSpeedBuf.addFormat("%f/%f", sp, pj.gameSpeed);
-					} else pj.spriteSpeedBuf.addFormat("%f", sp);
-					pj.spriteSpeedBuf.addFormat(");\r\n");
-				} else trace('Sprite $name uses non-standard playback speed ('
-					+ sp + (st == 0 ? '/${pj.gameSpeed}fps' : 'fpf')
-					+ '). Default speed will be used.');
-			}
-		}
+		//
 		var index = 0;
 		var imgDir = Path.join([Path.directory(outPath), "images"]);
 		var baseDir = Path.directory(inPath);

@@ -8,5 +8,6 @@ class Alias {}
 typedef StringPos = Int;
 typedef CharCode = Int;
 typedef Ident = String;
+typedef RelPath = String;
 typedef FullPath = String;
 typedef ConfigTargets = haxe.extern.EitherType<String, Int>;

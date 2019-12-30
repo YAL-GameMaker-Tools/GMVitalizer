@@ -34,9 +34,53 @@ class VitProject {
 	public var apiUses:Map<Ident, Bool> = new Map();
 	
 	//
-	var folders:Map<YyGUID, YyView> = new Map();
-	var assets:Map<YyGUID, YyProjectResource> = new Map();
-	var rootView:YyView = null;
+	public var folders:Map<YyGUID, YyView> = new Map();
+	public var assets:Map<YyGUID, YyProjectResource> = new Map();
+	private var assetDataCache:Map<YyGUID, {val:Dynamic}> = new Map();
+	/** Asset ID -> Asset JSON */
+	public function getAssetData(id:YyGUID):Dynamic {
+		var ctr = assetDataCache[id];
+		if (ctr == null) {
+			var pair = assets[id];
+			var path = pair.Value.resourcePath;
+			var value:Dynamic = null;
+			try {
+				var rt = pair.Value.resourceType;
+				var text = File.getContent(projectDir + '/' + path);
+				if (rt == GMExtension) {
+					text = ~/(\n[ \t]*"copyToTargets":[ \t]*)(\d+)([\r\n,])/g
+						.replace(text, '$1"$2"$3');
+				}
+				value = Json.parse(text);
+			} catch (x:Dynamic) {
+				trace('Failed to get asset data for $path: $x');
+			}
+			ctr = {val:value};
+			assetDataCache[id] = ctr;
+		}
+		return ctr.val;
+	}
+	
+	private var assetTextCache:Map<FullPath, String> = new Map();
+	public function getAssetText(path:FullPath):String {
+		var text = assetTextCache[path];
+		if (text == null) {
+			try {
+				text = File.getContent(path);
+			} catch (x:Dynamic) {
+				text = "";
+				trace('Failed to get asset text for $path: $x');
+			}
+			assetTextCache[path] = text;
+		}
+		return text;
+	}
+	
+	public inline function fullPath(path:RelPath):FullPath {
+		return projectDir + "/" + path;
+	}
+	
+	public var rootView:YyView = null;
 	//
 	public var project:YyProject;
 	public var projectPath:FullPath;
@@ -163,19 +207,36 @@ class VitProject {
 		//
 		for (pair in project.resources) switch (pair.Value.resourceType) {
 			case GMTileSet: {
-				var rel = pair.Value.resourcePath;
-				var name = Path.withoutDirectory(Path.withoutExtension(rel));
-				var yyFull = Path.join([projectDir, rel]);
-				var yy:Dynamic = try {
-					Json.parse(File.getContent(yyFull));
-				} catch (x:Dynamic) {
-					Sys.println('Error loading $rel: $x');
-					continue;
-				};
-				VitTileset.pre(name, yy);
+				var yy = getAssetData(pair.Key);
+				if (yy != null) VitTileset.pre(pair.Value.resourceName, yy);
 			};
+			case GMSprite: {
+				var yy = getAssetData(pair.Key);
+				if (yy != null) VitSprite.pre(pair.Value.resourceName, yy);
+			};
+			case GMScript: {
+				var yyScript:YyScript = getAssetData(pair.Key);
+				if (yyScript != null && !yyScript.IsCompatibility) {
+					VitGML.index(
+						getAssetText(fullPath(pair.Value.resourcePath)),
+						pair.Value.resourceName
+					);
+				}
+			};
+			case GMObject: {
+				var yyObject:YyObject = getAssetData(pair.Key);
+				if (yyObject != null) {
+					VitObject.index(
+						pair.Value.resourceName,
+						yyObject, 
+						fullPath(pair.Value.resourcePath)
+					);
+				}
+			};
+			default:
 		}
 		//}
+		if (spriteSpeedBuf.length > 0) apiUses["sprite_speed"] = true;
 		Ruleset.init();
 		//
 		function addAssetNode(chain:Array<String>, gmxItem:SfGmx, plural:String, before:Bool = false):Void {
@@ -204,7 +265,7 @@ class VitProject {
 			var id = pair.Key;
 			if (noExport[id]) return;
 			var yyType = pair.Value.resourceType;
-			var single = yyType.substring(2).toLowerCase();
+			var single = yyType.toString().substring(2).toLowerCase();
 			var path = pair.Value.resourcePath;
 			var name = Path.withoutDirectory(Path.withoutExtension(path));
 			//
@@ -239,17 +300,11 @@ class VitProject {
 			//
 			var yyPath = pair.Value.resourcePath;
 			var yyFull = Path.join([projectDir, yyPath]);
-			var yy:Dynamic = try {
-				var text = File.getContent(yyFull);
-				if (single == "extension") {
-					text = ~/(\n[ \t]*"copyToTargets":[ \t]*)(\d+)([\r\n,])/g
-						.replace(text, '$1"$2"$3');
-				}
-				Json.parse(text);
-			} catch (x:Dynamic) {
-				Sys.println('Error loading $yyPath: $x');
+			var yy:Dynamic = getAssetData(id);
+			if (yy == null) {
+				trace("no data for " + yyFull);
 				return;
-			};
+			}
 			var outPath = Path.join([dir, gmxPath]);
 			var gmxItem = new SfGmx(single, gmxPath);
 			//
@@ -333,7 +388,7 @@ class VitProject {
 			Ruleset.importList.unshift(imp);
 		}
 		//
-		{
+		if (spriteSpeedBuf.length > 0) {
 			var spb = new StringBuilder();
 			spb.addFormat('gml_pragma("global", "gmv_sprite_speed_init()");\r\n');
 			spb.addFormat("var l_data = ds_list_create();\r\n");
