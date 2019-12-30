@@ -106,8 +106,18 @@ class Ruleset {
 			};
 			var imp = new ImportRule(name, full, kind);
 			importMap[name] = imp;
-			importsByIdent[name] = [imp];
 			fullImportList.push(imp);
+			if (kind != "extension") {
+				importsByIdent[name] = [imp];
+			} else {
+				imp.data = File.getContent(full);
+				imp.gmxData = SfGmx.parse(imp.data);
+				for (extFile in imp.gmxData.find("files").findAll("file")) {
+					for (fn in extFile.find("functions").findAll("function")) {
+						importsByIdent[fn.findText("name")] = [imp];
+					}
+				}
+			}
 		}
 		for (imp in fullImportList) imp.index();
 		//

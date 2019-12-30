@@ -439,8 +439,8 @@ class VitProject {
 					extNode.setInt("index", extensions.children.length);
 					extensions.addChild(extNode);
 					//
-					File.copy(imp.path, '$dir\\extensions\\$name.extension.gmx');
-					var extRoot = SfGmx.parse(File.getContent(imp.path));
+					File.saveContent('$dir\\extensions\\$name.extension.gmx', imp.data);
+					var extRoot = imp.gmxData;
 					var extInDir = Path.directory(imp.path) + '\\$name';
 					var extOutDir = '$dir\\extensions\\$name';
 					if (!FileSystem.exists(extOutDir)) FileSystem.createDirectory(extOutDir);
