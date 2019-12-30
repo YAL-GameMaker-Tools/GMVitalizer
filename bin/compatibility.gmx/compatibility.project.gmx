@@ -5,6 +5,7 @@
   </Configs>
   <NewExtensions>
     <extension index="0">extensions\gmv_array_magic</extension>
+    <extension index="1">extensions\collision_list_magic</extension>
   </NewExtensions>
   <sounds name="sound"/>
   <sprites name="sprites"/>
