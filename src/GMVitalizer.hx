@@ -17,9 +17,11 @@ class GMVitalizer {
 				var name = Path.withoutDirectory(Path.withoutExtension(from));
 				gml = VitGML.proc(gml, name);
 				File.saveContent(to, gml);
+				Sys.println("OK!");
 			};
 			case "yyp": {
 				VitProject.proc(from, to);
+				Sys.println("OK!");
 			};
 			default: {
 				Sys.println('No idea what to do with .$ext');
