@@ -9,10 +9,10 @@ import sys.io.File;
 class GMVitalizer {
 	public static var dir:String;
 	static function proc(from:String, to:String) {
-		Ruleset.init();
 		var ext = Path.extension(from).toLowerCase();
 		switch (ext) {
 			case "gml": {
+				Ruleset.init();
 				var gml = File.getContent(from);
 				var name = Path.withoutDirectory(Path.withoutExtension(from));
 				gml = VitGML.proc(gml, name);

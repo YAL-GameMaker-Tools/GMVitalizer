@@ -29,6 +29,10 @@ class VitProject {
 	public var audioGroupNames:Array<Ident> = [];
 	public var textureGroupIDs:Map<YyGUID, Int> = new Map();
 	public var spriteSpeedBuf:StringBuilder = new StringBuilder();
+	
+	/** "func_name" -> true */
+	public var apiUses:Map<Ident, Bool> = new Map();
+	
 	//
 	var folders:Map<YyGUID, YyView> = new Map();
 	var assets:Map<YyGUID, YyProjectResource> = new Map();
@@ -172,6 +176,8 @@ class VitProject {
 			};
 		}
 		//}
+		Ruleset.init();
+		//
 		function addAssetNode(chain:Array<String>, gmxItem:SfGmx, plural:String, before:Bool = false):Void {
 			var gmxDir = gmx;
 			for (part in chain) {
