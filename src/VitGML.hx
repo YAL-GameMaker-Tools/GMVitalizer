@@ -94,12 +94,7 @@ class VitGML {
 						}
 					}
 				};
-				case '@'.code: { // possibly string literals
-					c = src.fastCodeAt(pos++);
-					if (c == '"'.code || c == "'".code) { // it's them
-						pos = src.skipString1(pos, c);
-					}
-				};
+				case '@'.code: pos = src.skipAtSignCommon(pos);
 				case '"'.code: pos = src.skipString2(pos);
 				default:
 			}
@@ -131,18 +126,8 @@ class VitGML {
 			var at = pos;
 			var c = src.fastCodeAt(pos++);
 			switch (c) {
-				case "/".code: { // comments
-					if (pos < len) switch (src.fastCodeAt(pos)) {
-						case "/".code: pos = src.skipLine(pos + 1);
-						case "*".code: pos = src.skipComment(pos + 1);
-					}
-				};
-				case '@'.code: { // possibly string literals
-					c = src.fastCodeAt(pos++);
-					if (c == '"'.code || c == "'".code) { // it's them
-						pos = src.skipString1(pos, c);
-					}
-				};
+				case "/".code: pos = src.skipSlashCommon(pos);
+				case '@'.code: pos = src.skipAtSignCommon(pos);
 				case '"'.code: pos = src.skipString2(pos);
 				case _ if (c.isIdent0()): {
 					pos = src.skipIdent1(pos);
@@ -213,23 +198,8 @@ class VitGML {
 			var at = pos;
 			var c = src.fastCodeAt(pos++);
 			switch (c) {
-				case "/".code: { // comments
-					if (pos < len) switch (src.fastCodeAt(pos)) {
-						case "/".code: {
-							pos = src.skipLine(pos + 1);
-							flush(pos);
-							out.addChar(commentEOL);
-							start = pos;
-						};
-						case "*".code: pos = src.skipComment(pos + 1);
-					}
-				};
-				case '@'.code: { // possibly string literals
-					c = src.fastCodeAt(pos++);
-					if (c == '"'.code || c == "'".code) { // it's them
-						pos = src.skipString1(pos, c);
-					}
-				};
+				case "/".code: pos = src.skipSlashCommon(pos);
+				case '@'.code: pos = src.skipAtSignCommon(pos);
 				case '"'.code: pos = src.skipString2(pos);
 				case "?".code: do {
 					if (src.fastCodeAt(src.skipSpaceBackwards(at)) == "[".code) break;
@@ -560,10 +530,10 @@ class VitGML {
 					}
 				};
 				case '@'.code: { // possibly string literals
-					c = src.fastCodeAt(pos++);
+					c = src.fastCodeAt(pos);
 					if (c == '"'.code || c == "'".code) { // string literals
 						flush(at);
-						pos = src.skipString1(pos, c);
+						pos = src.skipString1(pos + 1, c);
 						out.addSub(src, at + 1, pos - at - 1);
 						start = pos;
 					}

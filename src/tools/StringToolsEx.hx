@@ -49,6 +49,21 @@ class StringToolsEx {
 		return sp;
 	}
 	
+	public static function skipSlashCommon(src:String, pos:StringPos):StringPos {
+		switch (src.fastCodeAt(pos)) {
+			case "/".code: return src.skipLine(pos + 1);
+			case "*".code: return src.skipComment(pos + 1);
+			default: return pos;
+		}
+	}
+	
+	public static function skipAtSignCommon(src:String, pos:StringPos):StringPos {
+		var c = src.fastCodeAt(pos);
+		if (c == '"'.code || c == "'".code) {
+			return skipString1(src, pos + 1, c);
+		} else return pos;
+	}
+	
 	public static function skipString1(src:String, pos:StringPos, end:CharCode):StringPos {
 		var len = src.length;
 		while (pos < len) {
