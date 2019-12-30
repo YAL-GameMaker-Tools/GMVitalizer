@@ -14,7 +14,7 @@ typedef YyProjectResource = {
 typedef YyProjectResourceValue = {
 	id:YyGUID,
 	resourcePath:String,
-	resourceType:String,
-	/// GMEdit-only
+	resourceType:YyResourceType,
+	/** non-standard */
 	?resourceName:String,
 };

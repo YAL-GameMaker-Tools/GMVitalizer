@@ -56,25 +56,20 @@ class VitProject {
 		//
 		for (pair in project.resources) {
 			var id = pair.Key;
-			if (pair.Value.resourceType == "GMFolder") {
+			if (pair.Value.resourceType == GMFolder) {
 				var fd:YyView = Json.parse(File.getContent(Path.join([dir, "views", '$id.yy'])));
 				folders[id] = fd;
 				if (fd.isDefaultView) rootView = fd;
 			} else {
 				assets[id] = pair;
-				var tstore = switch (pair.Value.resourceType) {
-					case "GMObject": 1;
-					case "GMSprite": 2;
-					default: 0;
+				var path = pair.Value.resourcePath;
+				var name = Path.withoutDirectory(Path.withoutExtension(path));
+				pair.Value.resourceName = name;
+				switch (pair.Value.resourceType) {
+					case GMObject: objectNames[id] = name;
+					case GMSprite: spriteNames[id] = name;
+					default: 
 				};
-				if (tstore > 0) {
-					var path = pair.Value.resourcePath;
-					var name = Path.withoutDirectory(Path.withoutExtension(path));
-					switch (tstore) {
-						case 1: objectNames[id] = name;
-						case 2: spriteNames[id] = name;
-					}
-				}
 			}
 		}
 		//
@@ -157,12 +152,13 @@ class VitProject {
 		ensureDir('$dir/extensions');
 		//}
 		VitProjectOptions.proc(this);
+		//{ prepare assets
 		for (augName in audioGroupNames) {
 			audioGroups.addEmptyChild("audiogroup").set("name", augName);
 		}
-		//{ prepare assets
+		//
 		for (pair in project.resources) switch (pair.Value.resourceType) {
-			case "GMTileSet": {
+			case GMTileSet: {
 				var rel = pair.Value.resourcePath;
 				var name = Path.withoutDirectory(Path.withoutExtension(rel));
 				var yyFull = Path.join([projectDir, rel]);
@@ -251,7 +247,7 @@ class VitProject {
 			var outPath = Path.join([dir, gmxPath]);
 			var gmxItem = new SfGmx(single, gmxPath);
 			//
-			if (!Params.ignoreResourceType[single]) switch (single) {
+			switch (single) {
 				case "script": {
 					var scr:YyScript = yy;
 					if (scr.IsCompatibility) return;
@@ -273,8 +269,9 @@ class VitProject {
 				case "object":    VitObject.proc(name, yy, yyFull, outPath);
 				case "room":        VitRoom.proc(name, yy, yyFull, outPath);
 				case "background": switch (yyType) {
-					case "GMTileSet": VitTileset.proc(name, tilesets[id], yyFull, outPath);
-					case "GMSprite":   VitSprite.procBg(name, yy, yyFull, outPath);
+					case GMTileSet: VitTileset.proc(name, tilesets[id], yyFull, outPath);
+					case GMSprite:   VitSprite.procBg(name, yy, yyFull, outPath);
+					default:
 				};
 				case "shader": {
 					var sh:YyShader = yy;
