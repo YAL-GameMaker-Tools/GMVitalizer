@@ -71,8 +71,15 @@ class RemapRule {
 					pos = end + 1;
 					start = pos;
 				} else if (c >= "0".code && c <= "9".code) {
-					flush(pos - 2);
-					out.push(Capture(c - "0".code));
+					var indexStart = pos - 2;
+					while (pos < len) {
+						c = src.fastCodeAt(pos);
+						if (c >= "0".code && c <= "9".code) {
+							pos++;
+						} else break;
+					}
+					flush(indexStart);
+					out.push(Capture(Std.parseInt(src.substring(indexStart + 1, pos))));
 					start = pos;
 				}
 			}
