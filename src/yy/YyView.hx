@@ -8,7 +8,7 @@ typedef YyView = {
 	>YyBase,
 	name:YyGUID,
 	children:Array<YyGUID>,
-	filterType:String,
+	filterType:YyResourceType,
 	folderName:String,
 	isDefaultView:Bool,
 	localisedFolderName:String,

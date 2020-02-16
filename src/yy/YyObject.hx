@@ -9,16 +9,7 @@ typedef YyObject = {
 	var modelName:String;
 	var mvc:String;
 	var name:String;
-	var eventList:Array<{
-		var id:String;
-		var modelName:String;
-		var mvc:String;
-		var IsDnD:Bool;
-		var collisionObjectId:YyGUID;
-		var enumb:Int;
-		var eventtype:Int;
-		var m_owner:String;
-	}>;
+	var eventList:Array<YyObjectEvent>;
 	var maskSpriteId:YyGUID;
 	var overriddenProperties:Any;
 	var parentObjectId:YyGUID;
@@ -45,4 +36,14 @@ typedef YyObject = {
 	var solid:Bool;
 	var spriteId:YyGUID;
 	var visible:Bool;
+};
+typedef YyObjectEvent = {
+	var id:String;
+	var modelName:String;
+	var mvc:String;
+	var IsDnD:Bool;
+	var collisionObjectId:YyGUID;
+	var enumb:Int;
+	var eventtype:Int;
+	var m_owner:String;
 };
