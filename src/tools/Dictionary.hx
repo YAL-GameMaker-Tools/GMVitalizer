@@ -55,5 +55,8 @@ abstract Dictionary<T>(Map<String, T>) from Map<String, T> {
 	public inline function new() this = new Map();
 	public inline function destroy():Void { }
 	@:arrayAccess public inline function get(k:String):Null<T> return this.get(k);
+	@:arrayAccess public inline function setret(k:String, v:T):T {
+		this.set(k, v); return v;
+	}
 }
 #end
