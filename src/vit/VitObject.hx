@@ -3,8 +3,9 @@ import yy.*;
 import haxe.io.Path;
 import sys.io.File;
 import sys.io.FileInput;
-import tools.Alias.FullPath;
+import tools.Alias;
 import tools.SfGmx;
+import yy.YyObject;
 
 /**
  * ...
@@ -30,17 +31,21 @@ class VitObject {
 		linkType(13, "Gesture");
 		r;
 	}
+	public static function getEventFileName(qe:YyObjectEvent):Ident {
+		var etype = qe.eventtype;
+		var enumb = qe.enumb;
+		var ecobj = qe.collisionObjectId;
+		//
+		var epath = eventTypeNames[etype];
+		if (etype == 4) { // collision
+			epath += "_" + qe.id;
+		} else epath += "_" + enumb;
+		return epath;
+	}
 	public static function index(name:String, q:YyObject, inPath:FullPath) {
 		var inDir = Path.directory(inPath);
 		for (qe in q.eventList) {
-			var etype = qe.eventtype;
-			var enumb = qe.enumb;
-			var ecobj = qe.collisionObjectId;
-			//
-			var epath = eventTypeNames[etype];
-			if (etype == 4) { // collision
-				epath += "_" + qe.id;
-			} else epath += "_" + enumb;
+			var epath = getEventFileName(qe);
 			var efull = Path.join([inDir, epath + ".gml"]);
 			//
 			var ecode = VitProject.current.getAssetText(efull);
