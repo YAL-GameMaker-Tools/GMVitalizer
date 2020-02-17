@@ -2,8 +2,10 @@
 !/bin/rules.gml
 !/bin/compatibility
 !/bin/compatibility.gmx
+!/bin/compfix
 /bin/compatibility.gmx/#backups
 /bin/compatibility.gmx/Configs/Default
 /bin/compatibility/$.gml
 out/
 test.bat
+test-comp.bat

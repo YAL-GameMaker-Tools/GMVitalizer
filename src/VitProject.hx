@@ -19,7 +19,7 @@ import rules.*;
  */
 class VitProject {
 	public static var current:VitProject;
-	var isOK = false;
+	public var isOK = false;
 	public var objectNames:Map<YyGUID, Ident> = new Map();
 	public var spriteNames:Map<YyGUID, Ident> = new Map();
 	public var gameSpeed:Int = 60;
@@ -37,6 +37,8 @@ class VitProject {
 	
 	//
 	public var folders:Map<YyGUID, YyView> = new Map();
+	public var rootView:YyView = null;
+	
 	public var assets:Map<YyGUID, YyProjectResource> = new Map();
 	private var assetDataCache:Map<YyGUID, {val:Dynamic}> = new Map();
 	/** Asset ID -> Asset JSON */
@@ -84,7 +86,6 @@ class VitProject {
 		return projectDir + "/" + path;
 	}
 	
-	public var rootView:YyView = null;
 	//
 	public var project:YyProject;
 	public var projectPath:FullPath;
@@ -136,6 +137,42 @@ class VitProject {
 		//
 		SysTools.blockEnd();
 		isOK = true;
+	}
+	public function index():Void {
+		SysTools.blockStart("Indexing");
+		for (pair in project.resources) switch (pair.Value.resourceType) {
+			#if !gmv_nc
+			case GMTileSet: {
+				var yy = getAssetData(pair.Key);
+				if (yy != null) VitTileset.pre(pair.Value.resourceName, yy);
+			};
+			case GMSprite: {
+				var yy = getAssetData(pair.Key);
+				if (yy != null) VitSprite.pre(pair.Value.resourceName, yy);
+			};
+			#end
+			case GMScript: {
+				var yyScript:YyScript = getAssetData(pair.Key);
+				if (yyScript != null && !yyScript.IsCompatibility) {
+					VitGML.index(
+						getAssetText(fullPath(pair.Value.resourcePath)),
+						pair.Value.resourceName
+					);
+				}
+			};
+			case GMObject: {
+				var yyObject:YyObject = getAssetData(pair.Key);
+				if (yyObject != null) {
+					VitObject.index(
+						pair.Value.resourceName,
+						yyObject, 
+						fullPath(pair.Value.resourcePath)
+					);
+				}
+			};
+			default:
+		}
+		SysTools.blockEnd();
 	}
 	public function print(to:String) {
 		current = this;
@@ -207,36 +244,7 @@ class VitProject {
 			audioGroups.addEmptyChild("audiogroup").set("name", augName);
 		}
 		//
-		for (pair in project.resources) switch (pair.Value.resourceType) {
-			case GMTileSet: {
-				var yy = getAssetData(pair.Key);
-				if (yy != null) VitTileset.pre(pair.Value.resourceName, yy);
-			};
-			case GMSprite: {
-				var yy = getAssetData(pair.Key);
-				if (yy != null) VitSprite.pre(pair.Value.resourceName, yy);
-			};
-			case GMScript: {
-				var yyScript:YyScript = getAssetData(pair.Key);
-				if (yyScript != null && !yyScript.IsCompatibility) {
-					VitGML.index(
-						getAssetText(fullPath(pair.Value.resourcePath)),
-						pair.Value.resourceName
-					);
-				}
-			};
-			case GMObject: {
-				var yyObject:YyObject = getAssetData(pair.Key);
-				if (yyObject != null) {
-					VitObject.index(
-						pair.Value.resourceName,
-						yyObject, 
-						fullPath(pair.Value.resourcePath)
-					);
-				}
-			};
-			default:
-		}
+		index();
 		//}
 		if (spriteSpeedBuf.length > 0) apiUses["sprite_speed"] = true;
 		Ruleset.init();

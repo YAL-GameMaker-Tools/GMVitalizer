@@ -1,4 +1,5 @@
 package;
+import haxe.Json;
 import haxe.ds.Map;
 import haxe.io.Path;
 import sys.FileSystem;
@@ -6,6 +7,8 @@ import sys.io.File;
 import tools.Alias;
 import tools.SfGmx;
 import rules.*;
+import yy.YyExtension;
+import yy.YyResource;
 using StringTools;
 using tools.StringToolsEx;
 using tools.ERegTools;
@@ -48,15 +51,21 @@ class Ruleset {
 		if (arr == null) return;
 		for (imp in arr) if (!imp.isIncluded) imp.include();
 	}
-	public static function init() {
-		var rawPath = mainPath;
-		if (rawPath == null) rawPath = GMVitalizer.dir + "/rules.gml";
-		var raw = File.getContent(rawPath);
+	
+	//
+	static var rxWord = ~/\w+/g;
+	public static function initFile(path:String) {
+		var raw = File.getContent(path);
 		raw = RemapPreproc.run(raw);
-		var rxWord = ~/\w+/g;
 		//
-		~/^remap(?:\(([\w, ]+)\))?\s+(?:\$(\d).)?(\w+)(.*?)->\s*(.+)/gm
-		.each(raw, function(rx:EReg) {
+		new EReg("^remap\\b\\s*"
+			+ "(?:\\(([\\w, ]+)\\)\\s*)?" // `(flag1, flag2)`
+			+ "(?:\\$(\\d+).)?" // `$1.` (context capture)
+			+ "(\\w+)" // function/variable name
+			+ "(.*?)" // rest of input
+			+ "->\\s*"
+			+ "(.+)" // output
+		+ "", "gm").each(raw, function(rx:EReg) {
 			var ind = 0;
 			var all   = rx.matched(0);
 			var flags = rx.matched(++ind);
@@ -85,41 +94,6 @@ class Ruleset {
 			arr.push(rule);
 			remapList.push(rule);
 		});
-		//
-		for (dir in [
-			"compatibility",
-			"compatibility.gmx/scripts",
-			"compatibility.gmx/objects",
-			"compatibility.gmx/extensions",
-		]) for (rel in FileSystem.readDirectory(dir)) {
-			var full = Path.join([dir, rel]);
-			if (FileSystem.isDirectory(full)) continue;
-			var name = Path.withoutExtension(rel);
-			var kind:String;
-			switch (Path.extension(rel).toLowerCase()) {
-				case "gml": kind = "script";
-				case "gmx": {
-					kind = Path.extension(name);
-					name = Path.withoutExtension(name);
-				};
-				default: kind = "datafile";
-			};
-			var imp = new ImportRule(name, full, kind);
-			importMap[name] = imp;
-			fullImportList.push(imp);
-			if (kind != "extension") {
-				importsByIdent[name] = [imp];
-			} else {
-				imp.data = File.getContent(full);
-				imp.gmxData = SfGmx.parse(imp.data);
-				for (extFile in imp.gmxData.find("files").findAll("file")) {
-					for (fn in extFile.find("functions").findAll("function")) {
-						importsByIdent[fn.findText("name")] = [imp];
-					}
-				}
-			}
-		}
-		for (imp in fullImportList) imp.index();
 		//
 		~/^import\s([\w,\t ]+?)(?:\s*\bif[ \t]+([\w,\|\t ]+))?$/gm.each(raw, function(rx:EReg) {
 			var names = [];
@@ -159,10 +133,79 @@ class Ruleset {
 				}
 			}
 		}); // import
-		//for (k => v in importsByIdent) trace(k, v);
-		//
-		for (rule in remapList) {
-			rule.index();
+	}
+	public static function initGMS1(projectDir:String):Void {
+		for (dir in [
+			"compatibility.gmx/scripts",
+			"compatibility.gmx/objects",
+			"compatibility.gmx/extensions",
+		]) for (rel in FileSystem.readDirectory(dir)) {
+			var full = Path.join([dir, rel]);
+			if (FileSystem.isDirectory(full)) continue;
+			var name = Path.withoutExtension(rel);
+			var kind:String;
+			switch (Path.extension(rel).toLowerCase()) {
+				case "gml": kind = "script";
+				case "gmx": {
+					kind = Path.extension(name);
+					name = Path.withoutExtension(name);
+				};
+				default: kind = "datafile";
+			};
+			var imp = new ImportRule(name, full, kind);
+			importMap[name] = imp;
+			fullImportList.push(imp);
+			if (kind != "extension") {
+				importsByIdent[name] = [imp];
+			} else {
+				imp.data = File.getContent(full);
+				imp.gmxData = SfGmx.parse(imp.data);
+				for (extFile in imp.gmxData.find("files").findAll("file")) {
+					for (fn in extFile.find("functions").findAll("function")) {
+						importsByIdent[fn.findText("name")] = [imp];
+					}
+				}
+			}
 		}
+	}
+	public static function initGMS2(projectDir:String):Void {
+		var dir:String;
+		for (kind in ["script", "object", "extension"])
+		if (FileSystem.exists(dir = 'compfix/${kind}s'))
+		for (rel in FileSystem.readDirectory(dir)) {
+			var fdir = Path.join([dir, rel]);
+			var full = Path.join([fdir, rel + ".yy"]);
+			if (!FileSystem.exists(full)) continue;
+			var name = rel;
+			var imp = new ImportRule(name, full, kind);
+			importMap[name] = imp;
+			fullImportList.push(imp);
+			if (kind != "extension") {
+				importsByIdent[name] = [imp];
+			} else {
+				imp.data = File.getContent(full);
+				imp.yyData = Json.parse(imp.data);
+				var extension:YyExtension = imp.yyData;
+				for (extFile in extension.files) {
+					for (fn in extFile.functions) {
+						importsByIdent[fn.name] = [imp];
+					}
+				}
+			}
+		}
+	}
+	static function initFinish() {
+		for (imp in fullImportList) imp.index();
+		for (rule in remapList) rule.index();
+	}
+	public static function init() {
+		#if gmv_compfix
+		initFile(mainPath != null ? mainPath : "compfix.gml");
+		initGMS2("compatibility");
+		#else
+		initFile(mainPath != null ? mainPath : "rules.gml");
+		initGMS1("compatibility.gmx");
+		#end
+		initFinish();
 	}
 }

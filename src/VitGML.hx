@@ -247,19 +247,20 @@ class VitGML {
 					var at = pos - 1;
 					pos = src.skipIdent1(pos);
 					var id = src.substring(at, pos);
-					if (!VitProject.current.apiUses.exists(id)) {
-						VitProject.current.apiUses[id] = true;
-					}
+					var apiUses = VitProject.current.apiUses;
+					if (!apiUses.exists(id)) apiUses[id] = true;
 				};
 			}
 		}
 	}
 	
 	public static function proc(src:String, ctx:String):String {
+		#if !gmv_nc
 		src = escapeComments(src);
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
 		if (src.indexOf("?") >= 0) src = replaceTernaryOperators(src);
+		#end
 		
 		var out = new StringBuf();
 		var pos = 0;
@@ -475,6 +476,7 @@ class VitGML {
 			return foundRemap;
 		}
 		
+		#if !gmv_nc
 		#if !debug inline #end
 		function procString2(at:Int) {
 			var strBuf:StringBuf = null;
@@ -539,6 +541,7 @@ class VitGML {
 				}
 			}
 		}
+		#end
 		
 		while (pos < len) {
 			var at = pos;
@@ -553,13 +556,24 @@ class VitGML {
 				case '@'.code: { // possibly string literals
 					c = src.fastCodeAt(pos);
 					if (c == '"'.code || c == "'".code) { // string literals
+						#if gmv_nc
+						pos = src.skipString1(pos + 1, c);
+						#else
 						flush(at);
 						pos = src.skipString1(pos + 1, c);
 						out.addSub(src, at + 1, pos - at - 1);
 						start = pos;
+						#end
 					}
 				};
-				case '"'.code: procString2(at);
+				case '"'.code: {
+					#if gmv_nc
+					pos = src.skipString2(pos);
+					#else
+					procString2(at);
+					#end
+				};
+				#if !gmv_nc
 				case "[".code: { // possibly an array literal
 					var lp = at;
 					var isLiteral = false;
@@ -602,6 +616,7 @@ class VitGML {
 					out.addSub(src, at + 2, pos - at - 2);
 					start = pos;
 				};
+				#end
 				case _ if (c.isIdent0()): {
 					while (pos < len) {
 						c = src.fastCodeAt(pos);

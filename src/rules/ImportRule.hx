@@ -19,6 +19,7 @@ class ImportRule {
 	public var kind:String;
 	public var data:String = null;
 	public var gmxData:SfGmx = null;
+	public var yyData:Dynamic = null;
 	public var isIncluded:Bool = false;
 	public function new(name:Ident, path:FullPath, kind:String):Void {
 		this.name = name;
