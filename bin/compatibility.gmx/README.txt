@@ -1,0 +1,1 @@
+Referencing resources (scripts, objects, extensions) from this project will auto-import them on conversion.
