@@ -9,6 +9,7 @@ import tools.Alias;
 import tools.SfGmx;
 import vit.*;
 import tools.StringBuilder;
+import tools.SysTools;
 import yy.YyProject;
 import rules.*;
 
@@ -97,10 +98,11 @@ class VitProject {
 		projectPath = from;
 		var dir = Path.directory(from);
 		projectDir = dir;
-		Sys.println("Indexing project...");
+		SysTools.blockStart("Loading project");
 		project = try {
 			Json.parse(File.getContent(from));
 		} catch (x:Dynamic) {
+			Sys.println("");
 			Sys.println("Either this is a 2.3 project or JSON is malformed: " + x);
 			return;
 		};
@@ -132,7 +134,7 @@ class VitProject {
 			}
 		} catch (_:Dynamic) {};
 		//
-		Sys.println("Alright.");
+		SysTools.blockEnd();
 		isOK = true;
 	}
 	public function print(to:String) {
@@ -181,26 +183,23 @@ class VitProject {
 		//}
 		//{ prepare directories
 		var dir = Path.directory(to);
-		function ensureDir(path:String) {
-			if (!FileSystem.exists(path)) FileSystem.createDirectory(path);
-		}
-		ensureDir(dir);
-		ensureDir('$dir/Configs');
-		ensureDir('$dir/sprites');
-		ensureDir('$dir/sprites/images');
-		ensureDir('$dir/sound');
-		ensureDir('$dir/sound/audio');
-		ensureDir('$dir/background');
-		ensureDir('$dir/background/images');
-		ensureDir('$dir/paths');
-		ensureDir('$dir/scripts');
-		ensureDir('$dir/shaders');
-		ensureDir('$dir/fonts');
-		ensureDir('$dir/timelines');
-		ensureDir('$dir/objects');
-		ensureDir('$dir/rooms');
-		ensureDir('$dir/datafiles');
-		ensureDir('$dir/extensions');
+		SysTools.ensureDirectory(dir);
+		SysTools.ensureDirectory('$dir/Configs');
+		SysTools.ensureDirectory('$dir/sprites');
+		SysTools.ensureDirectory('$dir/sprites/images');
+		SysTools.ensureDirectory('$dir/sound');
+		SysTools.ensureDirectory('$dir/sound/audio');
+		SysTools.ensureDirectory('$dir/background');
+		SysTools.ensureDirectory('$dir/background/images');
+		SysTools.ensureDirectory('$dir/paths');
+		SysTools.ensureDirectory('$dir/scripts');
+		SysTools.ensureDirectory('$dir/shaders');
+		SysTools.ensureDirectory('$dir/fonts');
+		SysTools.ensureDirectory('$dir/timelines');
+		SysTools.ensureDirectory('$dir/objects');
+		SysTools.ensureDirectory('$dir/rooms');
+		SysTools.ensureDirectory('$dir/datafiles');
+		SysTools.ensureDirectory('$dir/extensions');
 		//}
 		VitProjectOptions.proc(this);
 		//{ prepare assets
