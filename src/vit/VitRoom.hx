@@ -325,7 +325,7 @@ class VitRoom {
 		} catch (_:Dynamic) "";
 		rccNode.text = rccFinal;
 		//
-		var imp = new rules.ImportRule("gmv_room_init_" + name, null, "script");
+		var imp = new rules.ImportRule("gmv_room_init_" + name, null, Script);
 		imp.data = cc.toString();
 		Ruleset.importList.push(imp);
 		//

@@ -1,6 +1,7 @@
 package rules;
 import haxe.ds.Map;
 import haxe.io.Path;
+import rules.ImportRuleKind;
 import sys.FileSystem;
 import sys.io.File;
 import tools.Alias;
@@ -13,15 +14,23 @@ using tools.StringToolsEx;
  * @author YellowAfterlife
  */
 class ImportRule {
+	
+	/** If we get included, these get included too */
 	public var dependants:Array<ImportRule> = [];
+	
+	/** Determines asset name when adding to project file. Defaults to original name */
 	public var name:Ident;
+	
+	/** .gml for scripts, .gmx/.yy for objects and extensions */
 	public var path:FullPath;
-	public var kind:String;
+	
+	
+	public var kind:ImportRuleKind;
 	public var data:String = null;
 	public var gmxData:SfGmx = null;
 	public var yyData:Dynamic = null;
 	public var isIncluded:Bool = false;
-	public function new(name:Ident, path:FullPath, kind:String):Void {
+	public function new(name:Ident, path:FullPath, kind:ImportRuleKind):Void {
 		this.name = name;
 		this.path = path;
 		this.kind = kind;
@@ -36,11 +45,11 @@ class ImportRule {
 	
 	public function index():Void {
 		switch (kind) {
-			case "script": {
+			case Script: {
 				data = File.getContent(path);
 				indexCode(data, dependants);
 			};
-			case "object": {
+			case Object: {
 				data = File.getContent(path);
 				var obj:SfGmx = SfGmx.parse(data);
 				var found = new Map<String, Bool>();
@@ -63,6 +72,7 @@ class ImportRule {
 					}
 				}
 			};
+			default:
 		}
 	}
 	

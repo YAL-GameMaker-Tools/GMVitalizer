@@ -392,7 +392,7 @@ class VitProject {
 		datafiles.setInt("number", datafileCount);
 		//
 		if (tilesetInit.length > 0) {
-			var imp = new ImportRule("gmv_tileset_init", null, "script");
+			var imp = new ImportRule("gmv_tileset_init", null, Script);
 			imp.data = 'gml_pragma("global", "gmv_tileset_init()");\r\n' + tilesetInit.toString();
 			imp.data = VitGML.proc(imp.data, "gmv_tileset_init"); // to trigger imports
 			Ruleset.importList.unshift(imp);
@@ -415,7 +415,7 @@ class VitProject {
 			spb.addString("while (--l_max >= 0) sprite_speed_array[l_max] = 1;\r\n");
 			spb.addString("for (var l_i = 0; l_i < l_count; l_i += 2) "
 				+ "sprite_speed_array[l_data[|l_i]] = l_data[|l_i + 1];\r\n");
-			var imp = new ImportRule("gmv_sprite_speed_init", null, "script");
+			var imp = new ImportRule("gmv_sprite_speed_init", null, Script);
 			imp.data = spb.toString();
 			Ruleset.importList.unshift(imp);
 		};
@@ -424,7 +424,7 @@ class VitProject {
 			var name = imp.name;
 			Sys.println('Importing $name...');
 			switch (imp.kind) {
-				case "script": {
+				case Script: {
 					var dest = '$dir\\scripts\\$name.gml';
 					if (imp.data != null) {
 						File.saveContent(dest, imp.data);
@@ -434,7 +434,7 @@ class VitProject {
 						new SfGmx("script", 'scripts\\$name.gml'),
 						"scripts", true);
 				};
-				case "object": {
+				case Object: {
 					var dest = '$dir\\objects\\$name.object.gmx';
 					if (imp.data != null) {
 						File.saveContent(dest, imp.data);
@@ -444,7 +444,7 @@ class VitProject {
 						new SfGmx("object", 'objects\\$name'),
 						"objects", true);
 				};
-				case "extension": {
+				case Extension: {
 					var extNode = new SfGmx("extension", 'extensions\\$name');
 					extNode.setInt("index", extensions.children.length);
 					extensions.addChild(extNode);

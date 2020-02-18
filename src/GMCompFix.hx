@@ -89,7 +89,7 @@ class GMCompFix extends VitProject {
 			if (resourceExists[name]) continue;
 			SysTools.blockStart('Importing $name');
 			switch (imp.kind) {
-				case "script": {
+				case Script: {
 					if (scriptView == null) {
 						scriptView = makeView(GMScript);
 						SysTools.ensureDirectory(fullPath("scripts"));
