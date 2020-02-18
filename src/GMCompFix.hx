@@ -112,7 +112,7 @@ class GMCompFix extends VitProject {
 						modelName: "GMScript",
 						mvc: "1.0",
 						name: name,
-						IsCompatibility: false,
+						IsCompatibility: true,
 						IsDnD: false
 					};
 					File.saveContent('$scriptDir/$name.yy', YyJson.stringify(yyScript));
@@ -136,11 +136,30 @@ class GMCompFix extends VitProject {
 			case GMScript: {
 				var yyv = yyr.Value;
 				var gmlPath = Path.withExtension(fullPath(yyv.resourcePath), "gml");
-				var gmlOld = getAssetText(gmlPath);
-				var gmlNew = VitGML.proc(gmlOld, yyv.resourceName);
-				if (gmlNew != gmlOld) {
-					Sys.println("Modified " + yyv.resourceName + ".");
-					File.saveContent(gmlPath, gmlNew);
+				var yyScript:YyScript = getAssetData(yyr.Key);
+				if (yyScript.IsCompatibility) {
+					// comp script, see if we have a replacement on hand
+					var imp = Ruleset.importMap[yyv.resourceName];
+					if (imp == null) {
+						imp = Ruleset.replaceBy[yyv.resourceName];
+						// prevents it from adding to project
+						if (imp != null) imp.name = yyv.resourceName;
+					}
+					if (imp == null || imp.kind != Script) continue;
+					var gmlOld = getAssetText(gmlPath);
+					var gmlNew = File.getContent(Path.withExtension(imp.path, "gml"));
+					if (gmlNew != gmlOld) {
+						Sys.println("Modified " + yyv.resourceName + ".");
+						File.saveContent(gmlPath, gmlNew);
+					}
+					imp.include();
+				} else {
+					var gmlOld = getAssetText(gmlPath);
+					var gmlNew = VitGML.proc(gmlOld, yyv.resourceName);
+					if (gmlNew != gmlOld) {
+						Sys.println("Modified " + yyv.resourceName + ".");
+						File.saveContent(gmlPath, gmlNew);
+					}
 				}
 			};
 			case GMObject: {

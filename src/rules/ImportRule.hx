@@ -1,4 +1,5 @@
 package rules;
+import haxe.CallStack;
 import haxe.ds.Map;
 import haxe.io.Path;
 import rules.ImportRuleKind;
@@ -37,6 +38,7 @@ class ImportRule {
 	}
 	
 	public function include() {
+		//trace(this, isIncluded, CallStack.toString(CallStack.callStack()));
 		if (isIncluded) return;
 		isIncluded = true;
 		for (dep in dependants) if (!dep.isIncluded) dep.include();
@@ -48,6 +50,7 @@ class ImportRule {
 			case Script: {
 				data = File.getContent(path);
 				indexCode(data, dependants);
+				//trace(name, data, dependants);
 			};
 			case Object: {
 				data = File.getContent(path);
