@@ -1,5 +1,6 @@
 /bin/*
 !/bin/rules.gml
+!/bin/compfix.gml
 !/bin/compatibility
 !/bin/compatibility.gmx
 !/bin/compfix
