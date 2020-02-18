@@ -60,7 +60,7 @@ remap vertex_format_add_texcoord -> vertex_format_add_textcoord
 remap instance_destroy($1, $2) -> instance_destroy_ext($1, $2)
 //}
 
-#if gml.sprite_speed
+#if gml["sprite_speed"]
 remap(stat) $1.sprite_index = $2 -> sprite_index_set($1, $2)
 remap(self,stat) sprite_index = $1 -> sprite_index_set(id, $1)
 
