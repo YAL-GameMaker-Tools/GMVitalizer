@@ -30,6 +30,7 @@ Optional arguments are as following:
   - `backgroundsrc`: background PNGs
   
   This can save time when re-running the conversion on same project with updated code/rules.
+- `-D name`, `-D name=value`: Specifies a custom parameter for use in ruleset filters (see below)
 
 ## Rulesets
 Ruleset files are the core of GMVitalizer.
@@ -100,6 +101,37 @@ import name if ident1 or ident2
 For conditional import, resource(s) will be imported if identifier(s) are referenced anywhere in the source code;  
 For the most time, you will not have to write import rules by hand, since referencing the resource by direct name imports it, and a resource will auto-import its dependencies (incl. object parents) as result.
 
+### Conditions
+If you desire to give multiple remaps/imports the same condition, there is also conditional compilation of sorts,
+```
+#if condition-expr
+...
+#end
+// or:
+#if condition-expr
+...
+#else
+...
+#end
+```
+condition-expr uses
+[hscript](https://github.com/HaxeFoundation/hscript)
+with a few predefined globals:
+
+- Standard library: `String`, `StringTools`, `Std`, `Math`, `trace`.
+- `defs`: A map containing parameters that you passed via `-D` (e.g. `#if defs["name"]`)
+- `gml`: A map that has keys for used GML API entries set (e.g. `#if gml["camera_create"]`)  
+  A few configuration-specific entries also end up in here:  
+  
+  - `sprite_speed`: indicates that the project has sprites with non-default (1 sprite frame per 1 game frame) speeds
+
+For convenience, the interpreter also uses slightly modified boolean evaluation rules:
+
+- Numbers are true-ish if they are not `0`
+- Strings are true-ish if they are not `""`
+- Object references are true-ish if they are not `null`
+- Booleans work as usual
+
 ## Building
 If you would like to compile from source code, you will need an up to date version of [Haxe](https://haxe.org/) and then either compile via [HaxeDevelop](https://haxedevelop.org/)/FlashDevelop, or compile from command-line/terminal, like so:
 ```bat
@@ -111,8 +143,23 @@ targeting C++ is generally going to yield higher performance, but less descripti
 This is by no means a comprehensive list, just things that _definitely_ don't work
 - Room inheritance
 - Variable definitions
-- Any 2.3+ syntax (object literals, expression handling, function literals)
+- Any 2.3+ syntax (object literals, exception handling, function literals)
 - Compatibility tile layers
-- Asset layers
-- Tile animations
-- Ternary operators
+- Asset layers (the GMS2-specific kind where you put sprites on a layer without instances/tiles)
+
+The following are the known caveats:
+- Tile animations are implemented by cycling indexes, GMS2 doesn't change indexes.  
+  (see `obj_gmv_layer_tilemap`)
+- Some of the Haxe source code is originally auto-generated (see [json2typedef](https://github.com/YellowAfterlife/json2typedef), [gmx2hxgen](https://bitbucket.org/yal_cc/gmx2hxgen)) and thus may look unusual.
+
+## Credits
+
+- Written/maintained by Vadim "YellowAfterlife" Dyachenko.
+- Written in [Haxe](https://haxe.org/).
+- Uses [hscript](https://github.com/HaxeFoundation/hscript) for conditionals.
+- Uses some snippets from [GMEdit](https://github.com/GameMakerDiscord/GMEdit/) for project processing.
+
+## Special thanks
+
+- [Ratalaika Games S.L.](http://ratalaikagames.com/), for funding majority of development of this project.  
+  I probably wouldn't get around to doing this otherwise.
