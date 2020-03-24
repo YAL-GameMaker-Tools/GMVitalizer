@@ -180,7 +180,7 @@ class VitGML {
 	 * (a ? b : c) -> tern_get((a) && tern_set(b) || tern_set(c))
 	 * And this will actually work as expected.
 	 */
-	static function replaceTernaryOperators(src:String):String {
+	static function replaceTernaryOperators(src:String, isInline:Bool):String {
 		var isReady = false;
 		var out = new StringBuilder();
 		var pos = 0;
@@ -203,7 +203,7 @@ class VitGML {
 				case '"'.code: pos = src.skipString2(pos);
 				case "?".code: do {
 					if (src.fastCodeAt(src.skipSpaceBackwards(at)) == "[".code) break;
-					var condStart = src.skipExprBackwards(at, true);
+					var condStart = src.skipExprBackwards(at, true, isInline);
 					var condEnd = src.skipSpaceBackwards(at) + 1;
 					var thenStart = src.skipBlanks(pos);
 					var thenEnd = src.skipExpr(thenStart);
@@ -219,9 +219,9 @@ class VitGML {
 					flush(condStart);
 					//
 					out.addFormat("tern_get((%s) && tern_set(%s) || tern_set(%s))",
-						replaceTernaryOperators(src.substring(condStart, condEnd)),
-						replaceTernaryOperators(src.substring(thenStart, thenEnd)),
-						replaceTernaryOperators(src.substring(elseStart, elseEnd))
+						replaceTernaryOperators(src.substring(condStart, condEnd), isInline),
+						replaceTernaryOperators(src.substring(thenStart, thenEnd), isInline),
+						replaceTernaryOperators(src.substring(elseStart, elseEnd), isInline)
 					);
 					pos = elseEnd;
 					start = pos;
@@ -254,12 +254,12 @@ class VitGML {
 		}
 	}
 	
-	public static function proc(src:String, ctx:String):String {
+	public static function proc(src:String, ctx:String, isInline:Bool = false):String {
 		#if !gmv_nc
 		src = escapeComments(src);
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
-		if (src.indexOf("?") >= 0) src = replaceTernaryOperators(src);
+		if (src.indexOf("?") >= 0) src = replaceTernaryOperators(src, isInline);
 		#end
 		
 		var out = new StringBuf();
@@ -274,7 +274,6 @@ class VitGML {
 			out.addSub(src, start, till - start);
 		}
 		
-		#if !debug inline #end
 		function procRemaps(startWord:String, at:Int, remaps:Array<RemapRule>) {
 			var debug = false;
 			var foundRemap = false;
@@ -286,6 +285,12 @@ class VitGML {
 			var precedingDotReady = false;
 			for (remap in remaps) {
 				var dotIndex = remap.dotIndex;
+				var accIndex = remap.accIndex;
+				
+				// currently we don't parse dotIndex/accIndex differenty, so reuse the logic:
+				if (dotIndex < 0) dotIndex = accIndex;
+				
+				// if needed, figure out if we need to backtrack for a "." first:
 				if ((dotIndex >= 0 || remap.selfOnly) && !precedingDotReady) {
 					precedingDotReady = true;
 					var lp = at;
@@ -297,11 +302,19 @@ class VitGML {
 						break;
 					}
 				}
+				
+				// with self-flag, having <pre>.<ident> is forbidden
 				if (remap.selfOnly && precedingDot) continue;
+				
 				if (dotIndex >= 0) {
 					if (!dotPrefixReady) {
 						dotPrefixReady = true;
-						if (precedingDot) {
+						if (accIndex >= 0) {
+							if (precedingDot) {
+								dotPrefixStart = src.skipDotExprBackwards(precedingDotPos);
+							} else dotPrefixStart = at;
+							dotPrefixString = src.substring(dotPrefixStart, pos - 2);
+						} else if (precedingDot) {
 							dotPrefixStart = src.skipDotExprBackwards(precedingDotPos);
 							dotPrefixString = src.substring(dotPrefixStart, precedingDotPos);
 						}
@@ -311,10 +324,9 @@ class VitGML {
 				//
 				var flushTill = dotIndex >= 0 ? dotPrefixStart : at;
 				if (remap.statOnly) {
-					//trace(src.substring(0, flushTill));
-					if (!src.isStatementBacktrack(flushTill)) continue;
+					if (!src.isStatementBacktrack(flushTill, isInline)) continue;
 				} else if (remap.exprOnly) {
-					if (src.isStatementBacktrack(flushTill)) continue;
+					if (src.isStatementBacktrack(flushTill, isInline)) continue;
 				}
 				//
 				var caps = null;
@@ -436,11 +448,11 @@ class VitGML {
 				//
 				if (dotIndex >= 0) {
 					if (caps == null) caps = [];
-					caps[remap.dotIndex] = dotPrefixString;
+					caps[dotIndex] = dotPrefixString;
 				}
 				// process code inside captures (to allow nesting):
 				if (caps != null) for (i in 0 ... caps.length) {
-					if (caps[i] != null) caps[i] = proc(caps[i].trim(), ctx);
+					if (caps[i] != null) caps[i] = proc(caps[i].trim(), ctx, true);
 				}
 				//
 				if (!remap.isUsed) {
@@ -604,7 +616,7 @@ class VitGML {
 						}
 						if (pos < len) {
 							flush(at);
-							out.add(proc("gmv_array(" + src.substring(at + 1, pos) + ")", ctx));
+							out.add(proc("gmv_array(" + src.substring(at + 1, pos) + ")", ctx, true));
 							start = ++pos;
 						}
 					}
@@ -629,7 +641,18 @@ class VitGML {
 					var foundRemap:Bool;
 					if (remaps != null) {
 						foundRemap = procRemaps(id, at, remaps);
-					} else foundRemap = false;
+					} else do {
+						foundRemap = false;
+						if (!Ruleset.hasRemapsByAccessor) break;
+						var posAfterIdent = src.skipSpace0(pos);
+						if (src.fastCodeAt(posAfterIdent) != "[".code) break;
+						remaps = Ruleset.remapsByAccessor[src.fastCodeAt(posAfterIdent + 1)];
+						if (remaps == null) break;
+						var posAtIdentEnd = pos;
+						pos = posAfterIdent + 2;
+						foundRemap = procRemaps("", at, remaps);
+						if (!foundRemap) pos = posAtIdentEnd;
+					} while (false);
 					if (!foundRemap) {
 						var arr = Ruleset.importsByIdent[id];
 						if (arr != null) for (imp in arr) imp.include();

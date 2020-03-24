@@ -48,7 +48,7 @@ class RemapPreproc {
 		g["Std"] = Std;
 		g["Math"] = Math;
 		g["defs"] = Params.defs;
-		g["gml"] = VitProject.current.apiUses;
+		g["gml"] = VitProject.current != null ? VitProject.current.apiUses : new Map();
 		g["trace"] = Reflect.makeVarArgs(function(args:Array<Dynamic>) {
 			var r = new StringBuf();
 			var z = false;

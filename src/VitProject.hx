@@ -57,7 +57,7 @@ class VitProject {
 				}
 				value = Json.parse(text);
 			} catch (x:Dynamic) {
-				trace('Failed to get asset data for $path: $x'
+				Sys.println('Failed to get asset data for $path: $x'
 					+ '\nfrom ' + CallStack.toString(CallStack.callStack()));
 			}
 			ctr = {val:value};
@@ -74,7 +74,7 @@ class VitProject {
 				text = File.getContent(path);
 			} catch (x:Dynamic) {
 				text = "";
-				trace('Failed to get asset text for $path: $x'
+				Sys.println('Failed to get asset text for $path: $x'
 					+ '\nfrom ' + CallStack.toString(CallStack.callStack()));
 			}
 			assetTextCache[path] = text;

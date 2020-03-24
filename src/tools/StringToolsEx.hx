@@ -297,7 +297,7 @@ class StringToolsEx {
 	 * `var a = b ¦? c : d` -> `var a = ¦b ? c : d`
 	 * Can only do inline expressions, no statements
 	 */
-	public static function skipExprBackwards(src:String, pos:StringPos, tern:Bool = false):StringPos {
+	public static function skipExprBackwards(src:String, pos:StringPos, tern:Bool, isInline:Bool):StringPos {
 		var depth = 0;
 		var result = pos;
 		while (--pos >= 0) {
@@ -345,7 +345,7 @@ class StringToolsEx {
 				};
 				case "=".code: {
 					if (tern) {
-						if (isStatementBacktrack(src, pos)) {
+						if (isStatementBacktrack(src, pos, isInline)) {
 							return result;
 						}
 						if (src.fastCodeAt(pos - 1) == "=".code) pos--;
@@ -417,7 +417,7 @@ class StringToolsEx {
 	/**
 	 * `if (_) ¦` -> true, `if (a || ¦b)` -> false, etc.
 	 */
-	public static function isStatementBacktrack(src:String, pos:StringPos):Bool {
+	public static function isStatementBacktrack(src:String, pos:StringPos, isInline:Bool):Bool {
 		while (--pos >= 0) {
 			var c = src.fastCodeAt(pos);
 			switch (c) {
@@ -478,7 +478,7 @@ class StringToolsEx {
 				};
 			}
 		}
-		return true;
+		return !isInline;
 	}
 	
 	/** includes spaces, tabs, linebreaks */

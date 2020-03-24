@@ -32,6 +32,13 @@ class Ruleset {
 	public static var remaps:Map<Ident, Array<RemapRule>> = new Map();
 	
 	/**
+	 * remap $1[?$2] -> ...
+	 * would mean remapsByAccessor["?".code] == [RemapRule]
+	 */
+	public static var remapsByAccessor:Map<Int, Array<RemapRule>> = new Map();
+	public static var hasRemapsByAccessor:Bool = false;
+	
+	/**
 	 * Imports included when a given identifier (e.g. function name) appears.
 	 * This includes referencing them directly or rulesets (import X if Y)
 	 */
@@ -67,8 +74,12 @@ class Ruleset {
 		//
 		new EReg("^remap\\b\\s*"
 			+ "(?:\\(([\\w, ]+)\\)\\s*)?" // `(flag1, flag2)`
-			+ "(?:\\$(\\d+).)?" // `$1.` (context capture)
-			+ "(\\w+)" // function/variable name
+			+ "(?:"
+				+ "\\$(\\d+)\\[([?#|@])" // `$1[?` (accessor capture)
+			+ "|"
+				+ "(?:\\$(\\d+)\\.)?" // `$1.` (context capture)
+				+ "(\\w+)" // function/variable name
+			+ ")"
 			+ "(.*?)" // rest of input
 			+ "->\\s*"
 			+ "(.+)" // output
@@ -76,13 +87,21 @@ class Ruleset {
 			var ind = 0;
 			var all   = rx.matched(0);
 			var flags = rx.matched(++ind);
+			var acck  = rx.matched(++ind);
+			var accCh = rx.matched(++ind);
 			var dotk  = rx.matched(++ind);
 			var start = rx.matched(++ind);
 			var from  = rx.matched(++ind).rtrim();
 			var to    = rx.matched(++ind).rtrim();
 			//
 			var rule = new RemapRule(from, to);
-			if (dotk != null) rule.dotIndex = Std.parseInt(dotk);
+			if (acck != null) {
+				rule.accIndex = Std.parseInt(acck);
+				rule.accChar = accCh.fastCodeAt(0);
+			} else if (dotk != null) {
+				rule.dotIndex = Std.parseInt(dotk);
+			}
+			//
 			if (flags != null) rxWord.each(flags, function(rx:EReg) {
 				var f = rx.matched(0);
 				switch (f) {
@@ -93,10 +112,20 @@ class Ruleset {
 				}
 			});
 			//
-			var arr = remaps[start];
-			if (arr == null) {
-				arr = [];
-				remaps[start] = arr;
+			var arr:Array<RemapRule>;
+			if (acck != null) {
+				arr = remapsByAccessor[rule.accChar];
+				if (arr == null) {
+					arr = [];
+					remapsByAccessor[rule.accChar] = arr;
+					hasRemapsByAccessor = true;
+				}
+			} else {
+				arr = remaps[start];
+				if (arr == null) {
+					arr = [];
+					remaps[start] = arr;
+				}
 			}
 			arr.push(rule);
 			remapList.push(rule);
@@ -236,6 +265,7 @@ class Ruleset {
 		for (rule in remapList) rule.index();
 		for (imp in importImmediately) imp.include();
 		//trace(fullImportList.join("\n"));
+		//trace(remapList.join("\n"));
 	}
 	public static function init() {
 		#if gmv_compfix

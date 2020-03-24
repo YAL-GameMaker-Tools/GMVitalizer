@@ -137,6 +137,7 @@ class GMCompFix extends VitProject {
 				var yyv = yyr.Value;
 				var gmlPath = Path.withExtension(fullPath(yyv.resourcePath), "gml");
 				var yyScript:YyScript = getAssetData(yyr.Key);
+				if (yyScript == null) continue;
 				if (yyScript.IsCompatibility) {
 					// comp script, see if we have a replacement on hand
 					var imp = Ruleset.importMap[yyv.resourceName];

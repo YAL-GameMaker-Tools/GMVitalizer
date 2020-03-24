@@ -19,8 +19,17 @@ class RemapRule {
 	public var outputs:Array<RemapRuleItem> = [];
 	public var dependants:Array<ImportRule> = [];
 	public var isUsed:Bool = false;
-	//
+	
+	/** For rules starting with `$i.field`, holds i. */
 	public var dotIndex:Int = -1;
+	
+	/** For rules starting with `$i[?|#@`, holds i */
+	public var accIndex:Int = -1;
+	
+	/** For rules starting with `$i[?|#@`, holds accessor char to match */
+	public var accChar:CharCode = -1;
+
+	// flags:
 	public var statOnly:Bool = false;
 	public var exprOnly:Bool = false;
 	public var selfOnly:Bool = false;
