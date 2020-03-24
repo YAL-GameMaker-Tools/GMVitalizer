@@ -3,6 +3,7 @@ remap d3d_set_fog -> gpu_set_fog
 remap d3d_set_hidden -> gpu_set_ztestenable
 remap d3d_set_lighting -> draw_set_lighting
 remap d3d_set_zwriteenable -> gpu_set_zwriteenable
+remap d3d_transform_vertex($1, $2, $3) -> matrix_transform_vertex(matrix_get(matrix_world), $1, $2, $3)
 remap draw_enable_alphablend -> gpu_set_blendenable
 remap draw_get_alpha_test -> gpu_get_alphatestenable
 remap draw_set_alpha_test -> gpu_set_alphatestenable
