@@ -9,11 +9,13 @@ class Params {
 	public static var backgroundRegex:Array<EReg> = [];
 	public static var ignoreResourceType:Map<String, Bool> = new Map();
 	public static var defs:Map<String, Dynamic> = new Map();
+	public static var nowait:Bool = false;
 	public static function proc(args:Array<String>):Array<String> {
 		args = args.copy();
 		var i = 0;
 		while (i < args.length) {
 			switch (args[i]) {
+				case "--nowait": nowait = true; args.splice(i, 1);
 				case "--rules": {
 					Ruleset.mainPath = args[i + 1];
 					args.splice(i, 2);

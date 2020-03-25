@@ -1,4 +1,5 @@
 package ;
+import haxe.CallStack;
 import haxe.Json;
 import haxe.io.Path;
 import sys.FileSystem;
@@ -199,11 +200,22 @@ class GMCompFix extends VitProject {
 		args = Params.proc(args);
 		if (args.length == 0) {
 			Sys.println("How to use: GMCompFix <path to YYP>");
+			Sys.println("(in PowerShell, do .\\GMCompFix <path to YYP>)");
+			Sys.println("Don't forget to make a backup of your project!");
+			Sys.println("Add --nowait to skip 'press any key to exit'.");
+			Sys.println("Press any key to exit.");
 			Sys.getChar(false);
 			return;
 		}
 		//
-		var pj = new GMCompFix(args[0]);
-		pj.proc();
+		try {
+			var pj = new GMCompFix(args[0]);
+			pj.proc();
+		} catch (x:Dynamic) {
+			Sys.println("Got an error: " + x);
+			Sys.println(CallStack.toString(CallStack.exceptionStack()));
+		}
+		Sys.println("Press any key to exit.");
+		Sys.getChar(false);
 	}
 }
