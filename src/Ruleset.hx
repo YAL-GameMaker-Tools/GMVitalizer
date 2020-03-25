@@ -270,10 +270,10 @@ class Ruleset {
 	public static function init() {
 		#if gmv_compfix
 		initGMS2("compfix");
-		initFile(mainPath != null ? mainPath : "compfix.gml");
+		initFile(mainPath != null ? mainPath : Path.directory(Sys.programPath()) + "/compfix.gml");
 		#else
 		initGMS1("compatibility.gmx");
-		initFile(mainPath != null ? mainPath : "rules.gml");
+		initFile(mainPath != null ? mainPath : Path.directory(Sys.programPath()) + "/rules.gml");
 		#end
 		initFinish();
 	}
