@@ -107,9 +107,11 @@ class VitProject {
 		};
 		//
 		for (pair in project.resources) {
-			var id = pair.Key;
+			var id = pair.Key, full:String;
 			if (pair.Value.resourceType == GMFolder) {
-				var fd:YyView = Json.parse(File.getContent(Path.join([dir, "views", '$id.yy'])));
+				full = Path.join([dir, "views", '$id.yy']);
+				if (!FileSystem.exists(full)) continue;
+				var fd:YyView = Json.parse(File.getContent(full));
 				folders[id] = fd;
 				if (fd.isDefaultView) rootView = fd;
 			} else {
