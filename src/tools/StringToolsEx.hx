@@ -389,6 +389,14 @@ class StringToolsEx {
 						}
 					}
 				};
+				case VitGML.commentEOL: {
+					if (depth <= 0) return till;
+					while (--pos >= 0) {
+						if (src.fastCodeAt(pos) == "/".code
+							&& src.fastCodeAt(pos - 1) == "/".code
+						) pos--;
+					}
+				};
 				case "(".code, "[".code, "{".code: depth++;
 				case ")".code, "]".code, "}".code: depth--;
 				case _ if (inline isIdent1(c)): {
@@ -439,6 +447,10 @@ class StringToolsEx {
 					if (src.fastCodeAt(--pos) == c) { //++thing?
 						// keep going
 					} else return false;
+				};
+				case ",".code: {
+					// it could be a variable declaration, but we don't usually remap those
+					return false;
 				};
 				case "/".code: {
 					if (src.fastCodeAt(--pos) == "*".code) { // comment
