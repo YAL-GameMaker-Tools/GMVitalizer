@@ -2,8 +2,10 @@ package;
 import haxe.Json;
 import haxe.ds.Map;
 import haxe.io.Path;
+#if sys
 import sys.FileSystem;
 import sys.io.File;
+#end
 import tools.Alias;
 import tools.SfGmx;
 import rules.*;
@@ -233,6 +235,7 @@ class Ruleset {
 	}
 	public static function initGMS2(projectDir:String):Void {
 		var dir:String;
+		#if sys
 		for (kindStr in ["script", "object", "extension"])
 		if (FileSystem.exists(dir = '$projectDir/${kindStr}s'))
 		for (rel in FileSystem.readDirectory(dir)) {
@@ -259,6 +262,7 @@ class Ruleset {
 				}
 			}
 		}
+		#end
 	}
 	static function initFinish() {
 		for (imp in fullImportList) imp.index();

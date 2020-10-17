@@ -3,8 +3,10 @@ import haxe.CallStack;
 import haxe.ds.Map;
 import haxe.io.Path;
 import rules.ImportRuleKind;
+#if sys
 import sys.FileSystem;
 import sys.io.File;
+#end
 import tools.Alias;
 import tools.SfGmx;
 using StringTools;

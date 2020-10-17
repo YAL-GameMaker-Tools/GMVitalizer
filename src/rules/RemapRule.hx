@@ -1,8 +1,10 @@
 package rules;
 import haxe.ds.Map;
 import haxe.io.Path;
+#if sys
 import sys.FileSystem;
 import sys.io.File;
+#end
 import tools.Alias;
 import tools.SfGmx;
 using StringTools;
