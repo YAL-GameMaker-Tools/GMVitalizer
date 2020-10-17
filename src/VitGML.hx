@@ -46,6 +46,7 @@ class VitGML {
 						case "*".code: pos = src.skipComment(pos + 1);
 					}
 				};
+				#if !gmv_nc
 				case '#'.code: { // possibly macros or regions
 					if (!src.fastCodeAt(pos).isIdent0()) {
 						// not what we want
@@ -94,6 +95,7 @@ class VitGML {
 						}
 					}
 				};
+				#end
 				case '@'.code: pos = src.skipAtSignCommon(pos);
 				case '"'.code: pos = src.skipString2(pos);
 				default:
@@ -255,8 +257,8 @@ class VitGML {
 	}
 	
 	public static function proc(src:String, ctx:String, isInline:Bool = false):String {
-		#if !gmv_nc
 		src = escapeComments(src);
+		#if !gmv_nc
 		src = fixSpaces(src);
 		src = fixVarDecl(src, ctx);
 		if (src.indexOf("?") >= 0) src = replaceTernaryOperators(src, isInline);
@@ -323,6 +325,8 @@ class VitGML {
 				}
 				//
 				var flushTill = dotIndex >= 0 ? dotPrefixStart : at;
+				//trace(src.substring(0, flushTill));
+				//trace(src.isStatementBacktrack(flushTill, isInline), remap.statOnly, remap.exprOnly);
 				if (remap.statOnly) {
 					if (!src.isStatementBacktrack(flushTill, isInline)) continue;
 				} else if (remap.exprOnly) {
@@ -639,6 +643,7 @@ class VitGML {
 					var id = src.substring(at, pos);
 					var remaps = Ruleset.remaps[id];
 					var foundRemap:Bool;
+					//trace(src.substring(pos) + "\n\n");
 					if (remaps != null) {
 						foundRemap = procRemaps(id, at, remaps);
 					} else do {
@@ -651,7 +656,9 @@ class VitGML {
 						var posAtIdentEnd = pos;
 						pos = posAfterIdent + 2;
 						foundRemap = procRemaps("", at, remaps);
-						if (!foundRemap) pos = posAtIdentEnd;
+						if (!foundRemap) {
+							pos = posAtIdentEnd;
+						}
 					} while (false);
 					if (!foundRemap) {
 						var arr = Ruleset.importsByIdent[id];
