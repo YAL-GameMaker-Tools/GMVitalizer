@@ -209,8 +209,20 @@ class GMCompFix extends VitProject {
 		}
 		//
 		try {
-			var pj = new GMCompFix(args[0]);
-			pj.proc();
+			var path = args[0];
+			switch (Path.extension(path).toLowerCase()) {
+				case "gml": {
+					Ruleset.init();
+					var gml = File.getContent(path);
+					gml = VitGML.proc(gml, Path.withoutDirectory(path), false);
+					File.saveContent(args[1], gml);
+				};
+				case "yyp": {
+					var pj = new GMCompFix(args[0]);
+					pj.proc();
+				};
+				default: throw "Expected a YYP";
+			}
 		} catch (x:Dynamic) {
 			Sys.println("Got an error: " + x);
 			Sys.println(CallStack.toString(CallStack.exceptionStack()));
