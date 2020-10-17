@@ -1,0 +1,7 @@
+-cp src
+-lib hscript
+-lib hxcpp-debug-server
+-cpp bin/gmcompfix_cpp
+-D gmv_nc
+-D gmv_compfix
+-main GMCompFix
