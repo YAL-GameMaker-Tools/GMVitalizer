@@ -135,9 +135,14 @@ For convenience, the interpreter also uses slightly modified boolean evaluation 
 ## Building
 If you would like to compile from source code, you will need an up to date version of [Haxe](https://haxe.org/) and then either compile via [HaxeDevelop](https://haxedevelop.org/)/FlashDevelop, or compile from command-line/terminal, like so:
 ```bat
-haxe -cp src -neko bin/gmvitalizer.n -main GMVitalizer
+haxe -cp src -neko bin/gmvitalizer.n -main GMVitalizer -lib hscript
 ```
 targeting C++ is generally going to yield higher performance, but less descriptive error messages (unless in debug mode).
+
+You will also need to install `hscript` library if you didn't yet:
+```
+haxelib install hscript
+```
 
 ## Limitations
 This is by no means a comprehensive list, just things that _definitely_ don't work
