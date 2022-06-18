@@ -94,11 +94,11 @@ private class RemapPreprocLine {
 private typedef RemapPreprocInput = GenericStack<RemapPreprocLine>;
 private class RemapPreprocInterp extends Interp {
 	public static function toBool(v:Dynamic):Bool {
-		if (Std.is(v, Bool)) {
+		if (v is Bool) {
 			return v;
-		} else if (Std.is(v, Float)) {
+		} else if (v is Float) {
 			return v != 0;
-		} else if (Std.is(v, String)) {
+		} else if (v is String) {
 			return v != null && v != "";
 		} else return v != null;
 	}

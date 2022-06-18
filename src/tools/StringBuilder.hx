@@ -23,32 +23,32 @@ class StringBuilder extends StringBuf {
 	private static function formatInit() {
 		return [
 			"%s" => function(b:StringBuilder, s:Dynamic, i:Int) {
-				if (Std.is(s, String)) {
+				if (s is String) {
 					b.addString(s);
 				} else throw 'Expected a string for arg#$i';
 			},
 			"%d" => function(b:StringBuilder, v:Dynamic, i:Int) {
-				if (Std.is(v, Int)) {
+				if (v is Int) {
 					b.addInt(v);
 				} else throw 'Expected an int for arg#$i';
 			},
 			"%f" => function(b:StringBuilder, v:Dynamic, i:Int) {
-				if (Std.is(v, Float)) {
+				if (v is Float) {
 					b.add(v);
 				} else throw 'Expected an int for arg#$i';
 			},
 			"%c" => function(b:StringBuilder, v:Dynamic, i:Int) {
-				if (Std.is(v, Int)) {
+				if (v is Int) {
 					b.addChar(v);
 				} else throw 'Expected a char for arg#$i';
 			},
 			"%z" => function(b:StringBuilder, v:Dynamic, i:Int) {
-				if (Std.is(v, Bool)) {
+				if (v is Bool) {
 					b.add(v);
 				} else throw 'Expected a bool for arg#$i';
 			},
 			"%t" => function(b:StringBuilder, v:Dynamic, i:Int) {
-				if (Std.is(v, Int)) {
+				if (v is Int) {
 					for (i in 0 ... v) b.addChar("\t".code);
 				} else throw 'Expected a tab count for arg#$i';
 			},
