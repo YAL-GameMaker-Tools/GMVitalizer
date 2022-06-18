@@ -12,6 +12,7 @@ import yy.YyProjectResource;
 import yy.*;
 import vit.*;
 import yy.YyView;
+using StringTools;
 
 /**
  * ...
@@ -178,6 +179,21 @@ class GMCompFix extends VitProject {
 					if (gmlNew != gmlOld) {
 						Sys.println('Modified $ectx.');
 						File.saveContent(efull, gmlNew);
+					}
+				}
+			};
+			case GMExtension: {
+				var yyExt:YyExtension = getAssetData(yyr.Key);
+				var extDir = Path.directory(fullPath(yyr.Value.resourcePath));
+				for (file in yyExt.files) {
+					if (Path.extension(file.filename).toLowerCase() != "gml") continue;
+					var fileFull = Path.join([extDir, file.filename]);
+					var fileCtx = yyExt.name + ":" + file.filename;
+					var gmlOld = getAssetText(fileFull);
+					var gmlNew = VitGML.proc(gmlOld, fileCtx);
+					if (gmlNew != gmlOld) {
+						Sys.println('Modified $fileCtx.');
+						File.saveContent(fileFull, gmlNew);
 					}
 				}
 			};
