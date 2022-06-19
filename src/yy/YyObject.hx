@@ -37,7 +37,19 @@ typedef YyObject = {
 	var spriteId:YyGUID;
 	var visible:Bool;
 };
-typedef YyObjectEvent = {
+abstract YyObjectEvent(Dynamic)
+from YyObjectEvent22
+from YyObjectEvent23 {
+	public var v22(get, never):YyObjectEvent22;
+	private inline function get_v22():YyObjectEvent22 return this;
+	
+	public var v23(get, never):YyObjectEvent23;
+	private inline function get_v23():YyObjectEvent23 return this;
+	
+	public var isV23(get, never):Bool;
+	private inline function get_isV23() return this.resourceVersion != null;
+}
+typedef YyObjectEvent22 = {
 	var id:String;
 	var modelName:String;
 	var mvc:String;
@@ -47,3 +59,9 @@ typedef YyObjectEvent = {
 	var eventtype:Int;
 	var m_owner:String;
 };
+typedef YyObjectEvent23 = {
+	var isDnD:Bool;
+	var eventNum:Int;
+	var eventType:Int;
+	var collisionObjectId:Null<{name:String,path:String}>;
+}

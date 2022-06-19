@@ -9,7 +9,7 @@ using StringTools;
  * @author YellowAfterlife
  */
 class YyJson {
-	static function isExtJson(src:String):Bool {
+	public static function isExtJson(src:String):Bool {
 		var p = src.length - 1;
 		while (p >= 0) {
 			switch (src.fastCodeAt(p)) {

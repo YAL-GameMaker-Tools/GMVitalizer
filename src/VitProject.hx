@@ -12,6 +12,7 @@ import tools.StringBuilder;
 import tools.SysTools;
 import yy.YyProject;
 import rules.*;
+using StringTools;
 
 /**
  * ...
@@ -39,13 +40,34 @@ class VitProject {
 	public var folders:Map<YyGUID, YyView> = new Map();
 	public var rootView:YyView = null;
 	
-	public var assets:Map<YyGUID, YyProjectResource> = new Map();
-	private var assetDataCache:Map<YyGUID, {val:Dynamic}> = new Map();
-	/** Asset ID -> Asset JSON */
+	public var assetsByGUID:Map<YyGUID, YyProjectResource> = new Map();
+	private var assetDataCacheByGUID:Map<YyGUID, {val:Dynamic}> = new Map();
+	
+	public var assetsByPath:Map<String, YyProjectResource> = new Map();
+	private var assetDataCacheByPath:Map<String, {val:Dynamic}> = new Map();
+	/** Asset ID (or path if 2.3+) -> Asset JSON */
 	public function getAssetData(id:YyGUID):Dynamic {
-		var ctr = assetDataCache[id];
-		if (ctr == null) {
-			var pair = assets[id];
+		if (v23) {
+			var ctr = assetDataCacheByPath[id];
+			if (ctr != null) return ctr.val;
+			var value:Dynamic = null;
+			var path:String = id;
+			try {
+				var text = File.getContent(projectDir + '/' + path);
+				value = YyJson.parse(text);
+			} catch (x:Dynamic) {
+				Sys.println('Failed to get asset data for $path: $x'
+					+ CallStack.toString(CallStack.exceptionStack())
+					+ CallStack.toString(CallStack.callStack())
+				);
+			}
+			ctr = {val:value};
+			assetDataCacheByPath[id] = ctr;
+			return ctr.val;
+		} else {
+			var ctr = assetDataCacheByGUID[id];
+			if (ctr != null) return ctr.val;
+			var pair = assetsByGUID[id].v22;
 			var path = pair.Value.resourcePath;
 			var value:Dynamic = null;
 			try {
@@ -60,9 +82,9 @@ class VitProject {
 				Sys.println('Failed to get asset data for $path: $x');
 			}
 			ctr = {val:value};
-			assetDataCache[id] = ctr;
+			assetDataCacheByGUID[id] = ctr;
+			return ctr.val;
 		}
-		return ctr.val;
 	}
 	
 	private var assetTextCache:Map<FullPath, String> = new Map();
@@ -93,29 +115,43 @@ class VitProject {
 	public var outName:String;
 	public var outDir:FullPath;
 	//
+	public var v23:Bool;
+	//
 	public function new(from:String) {
 		projectPath = from;
 		var dir = Path.directory(from);
 		projectDir = dir;
 		SysTools.blockStart("Loading project");
 		project = try {
-			Json.parse(File.getContent(from));
+			var txt = File.getContent(from);
+			v23 = YyJson.isExtJson(txt);
+			#if !gmv_compfix
+			throw "GMS2.3 projects are not supported.";
+			#end
+			v23 ? YyJson.parse(txt) : Json.parse(txt);
 		} catch (x:Dynamic) {
 			Sys.println("");
-			Sys.println("Either this is a 2.3 project or JSON is malformed: " + x);
+			Sys.println("Error:" + x);
 			return;
 		};
 		//
-		for (pair in project.resources) {
+		if (v23) init23(); else init22();
+		//
+		SysTools.blockEnd();
+		isOK = true;
+	}
+	function init22() {
+		for (_pair in project.resources) {
+			var pair = _pair.v22;
 			var id = pair.Key, full:String;
 			if (pair.Value.resourceType == GMFolder) {
-				full = Path.join([dir, "views", '$id.yy']);
+				full = Path.join([projectDir, "views", '$id.yy']);
 				if (!FileSystem.exists(full)) continue;
 				var fd:YyView = Json.parse(File.getContent(full));
 				folders[id] = fd;
 				if (fd.isDefaultView) rootView = fd;
 			} else {
-				assets[id] = pair;
+				assetsByGUID[id] = pair;
 				var path = pair.Value.resourcePath;
 				var name = Path.withoutDirectory(Path.withoutExtension(path));
 				pair.Value.resourceName = name;
@@ -128,50 +164,87 @@ class VitProject {
 		}
 		//
 		try {
-			var fakeJson = File.getContent(dir + "/options/main/inherited/options_main.inherited.yy");
+			var jsonDelta = File.getContent(projectDir + "/options/main/inherited/options_main.inherited.yy");
 			var rxSp = ~/"option_game_speed": ([-\d.]+)/;
-			if (rxSp.match(fakeJson)) {
+			if (rxSp.match(jsonDelta)) {
 				gameSpeed = Std.parseInt(rxSp.matched(1));
 			}
 		} catch (_:Dynamic) {};
-		//
-		SysTools.blockEnd();
-		isOK = true;
+	}
+	function init23() {
+		for (_pair in project.resources) {
+			var pair = _pair.v23;
+			var name = pair.id.name;
+			var path = pair.id.path;
+			// ... no action needed?
+		}
+		try {
+			var text = File.getContent(projectDir + "/options/main/options_main.yy");
+			var json = YyJson.parse(text);
+			gameSpeed = json.option_game_speed;
+		} catch (_:Dynamic) {}
+	}
+	public function forEachResource(fn:(name:String, path:String, type:YyResourceType, id:Any)->Void):Void {
+		if (v23) {
+			for (pair in project.resources) {
+				var path = pair.v23.id.path;
+				var type:YyResourceType = switch (path) {
+					case _ if (path.startsWith("sprites/")): GMSprite;
+					case _ if (path.startsWith("tilesets/")): GMTileSet;
+					case _ if (path.startsWith("scripts/")): GMScript;
+					case _ if (path.startsWith("objects/")): GMObject;
+					case _ if (path.startsWith("rooms/")): GMRoom;
+					case _ if (path.startsWith("extensions/")): GMExtension;
+					default: continue;
+				}
+				var name = pair.v23.id.name;
+				fn(name, path, type, path);
+			}
+		} else {
+			for (pair in project.resources) {
+				var yyr = pair.v22;
+				var type = yyr.Value.resourceType;
+				if (type == GMFolder) continue;
+				fn(yyr.Value.resourceName, yyr.Value.resourcePath, type, yyr.Key);
+			}
+		}
 	}
 	public function index():Void {
 		SysTools.blockStart("Indexing");
-		for (pair in project.resources) switch (pair.Value.resourceType) {
-			#if !gmv_nc
-			case GMTileSet: {
-				var yy = getAssetData(pair.Key);
-				if (yy != null) VitTileset.pre(pair.Value.resourceName, yy);
-			};
-			case GMSprite: {
-				var yy = getAssetData(pair.Key);
-				if (yy != null) VitSprite.pre(pair.Value.resourceName, yy);
-			};
-			#end
-			case GMScript: {
-				var yyScript:YyScript = getAssetData(pair.Key);
-				if (yyScript != null && !yyScript.IsCompatibility) {
-					VitGML.index(
-						getAssetText(fullPath(pair.Value.resourcePath)),
-						pair.Value.resourceName
-					);
-				}
-			};
-			case GMObject: {
-				var yyObject:YyObject = getAssetData(pair.Key);
-				if (yyObject != null) {
-					VitObject.index(
-						pair.Value.resourceName,
-						yyObject, 
-						fullPath(pair.Value.resourcePath)
-					);
-				}
-			};
-			default:
-		}
+		forEachResource(function(name, path, type, guid) {
+			switch (type) {
+				#if !gmv_nc
+				case GMTileSet: {
+					var yy = getAssetData(guid);
+					if (yy != null) VitTileset.pre(name, yy);
+				};
+				case GMSprite: {
+					var yy = getAssetData(guid);
+					if (yy != null) VitSprite.pre(name, yy);
+				};
+				#end
+				case GMScript: {
+					var yyScript:YyScript = getAssetData(guid);
+					if (yyScript != null && !yyScript.IsCompatibility) {
+						VitGML.index(
+							getAssetText(fullPath(path)),
+							name
+						);
+					}
+				};
+				case GMObject: {
+					var yyObject:YyObject = getAssetData(guid);
+					if (yyObject != null) {
+						VitObject.index(
+							name,
+							yyObject, 
+							fullPath(path)
+						);
+					}
+				};
+				default:
+			}
+		});
 		SysTools.blockEnd();
 	}
 	public function print(to:String) {
@@ -271,7 +344,8 @@ class VitProject {
 			//
 			gmxDir.addChild(gmxItem);
 		}
-		function printAsset(pair:YyProjectResource, chain:Array<String>):Void {
+		function printAsset(_pair:YyProjectResource, chain:Array<String>):Void {
+			var pair = _pair.v22;
 			var id = pair.Key;
 			if (noExport[id]) return;
 			var yyType = pair.Value.resourceType;
@@ -380,7 +454,7 @@ class VitProject {
 					printFolder(fd1, next);
 					continue;
 				}
-				var pair = assets[id];
+				var pair = assetsByGUID[id];
 				if (pair != null) {
 					printAsset(pair, chain);
 					continue;

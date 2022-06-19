@@ -24,20 +24,33 @@ class GMCompFix extends VitProject {
 	//
 	function new(path:String) {
 		super(path);
-		for (yyr in project.resources) {
-			var name = yyr.Value.resourceName;
-			if (name != null) resourceExists[name] = true;
+		if (v23) {
+			for (pair in project.resources) {
+				var yyr = pair.v23;
+				var name = yyr.id.name;
+				if (name != null) resourceExists[name] = true;
+			}
+		} else {
+			for (pair in project.resources) {
+				var yyr = pair.v22;
+				var name = yyr.Value.resourceName;
+				if (name != null) resourceExists[name] = true;
+			}
 		}
 		//trace(projectDir);
 	}
 	//
 	function addResource(yyr:YyProjectResource):Void {
-		var resources = project.resources;
-		var ni = yyr.Key;
-		var i = -1; while (++i < resources.length) {
-			if (ni.toString() < resources[i].Key.toString()) break;
+		if (v23) {
+			project.resources.push(yyr);
+		} else {
+			var resources = project.resources;
+			var ni = yyr.v22.Key;
+			var i = -1; while (++i < resources.length) {
+				if (ni.toString() < resources[i].v22.Key.toString()) break;
+			}
+			resources.insert(i, yyr);
 		}
-		resources.insert(i, yyr);
 	}
 	function flushView(view:YyView) {
 		if (view == null) return;
@@ -49,7 +62,7 @@ class GMCompFix extends VitProject {
 		var changedYYP = false;
 		function makeView(type:YyResourceType, name:String = "compfix"):YyView {
 			var id = new YyGUID();
-			var yyr:YyProjectResource = {
+			var yyr:YyProjectResource22 = {
 				Key: id,
 				Value: {
 					id: new YyGUID(),
@@ -91,7 +104,7 @@ class GMCompFix extends VitProject {
 			if (resourceExists[name]) continue;
 			SysTools.blockStart('Importing $name');
 			switch (imp.kind) {
-				case Script: {
+				case Script if (!v23): {
 					if (scriptView == null) {
 						scriptView = makeView(GMScript);
 						SysTools.ensureDirectory(fullPath("scripts"));
@@ -99,14 +112,15 @@ class GMCompFix extends VitProject {
 					var scriptDir = fullPath('scripts\\$name');
 					SysTools.ensureDirectory(scriptDir);
 					var id = new YyGUID();
-					addResource({
+					var yyr22:YyProjectResource22 = {
 						Key: id,
 						Value: {
 							id: new YyGUID(),
 							resourcePath: 'scripts\\$name\\$name.yy',
 							resourceType: GMScript
 						}
-					});
+					};
+					addResource(yyr22);
 					scriptView.children.push(id);
 					//
 					var yyScript:YyScript = {
@@ -134,77 +148,78 @@ class GMCompFix extends VitProject {
 		VitProject.current = this;
 		index();
 		Ruleset.init();
-		for (yyr in project.resources) switch (yyr.Value.resourceType) {
-			case GMScript: {
-				var yyv = yyr.Value;
-				var gmlPath = Path.withExtension(fullPath(yyv.resourcePath), "gml");
-				var yyScript:YyScript = getAssetData(yyr.Key);
-				if (yyScript == null) continue;
-				if (yyScript.IsCompatibility) {
-					// comp script, see if we have a replacement on hand
-					var imp = Ruleset.importMap[yyv.resourceName];
-					if (imp == null) {
-						imp = Ruleset.replaceBy[yyv.resourceName];
-						// prevents it from adding to project
-						if (imp != null) imp.name = yyv.resourceName;
+		forEachResource(function(name, path, type, guid) {
+			switch (type) {
+				case GMScript: {
+					var gmlPath = Path.withExtension(fullPath(path), "gml");
+					var yyScript:YyScript = getAssetData(guid);
+					if (yyScript == null) return;
+					if (yyScript.IsCompatibility) {
+						// comp script, see if we have a replacement on hand
+						var imp = Ruleset.importMap[name];
+						if (imp == null) {
+							imp = Ruleset.replaceBy[name];
+							// prevents it from adding to project
+							if (imp != null) imp.name = name;
+						}
+						if (imp == null || imp.kind != Script) return;
+						var gmlOld = getAssetText(gmlPath);
+						var gmlNew = File.getContent(Path.withExtension(imp.path, "gml"));
+						if (gmlNew != gmlOld) {
+							Sys.println("Modified " + name + ".");
+							File.saveContent(gmlPath, gmlNew);
+						}
+						imp.include();
+					} else {
+						var gmlOld = getAssetText(gmlPath);
+						var gmlNew = VitGML.proc(gmlOld, name);
+						if (gmlNew != gmlOld) {
+							Sys.println("Modified " + name + ".");
+							File.saveContent(gmlPath, gmlNew);
+						}
 					}
-					if (imp == null || imp.kind != Script) continue;
-					var gmlOld = getAssetText(gmlPath);
-					var gmlNew = File.getContent(Path.withExtension(imp.path, "gml"));
-					if (gmlNew != gmlOld) {
-						Sys.println("Modified " + yyv.resourceName + ".");
-						File.saveContent(gmlPath, gmlNew);
+				};
+				case GMObject: {
+					var yyObject:YyObject = getAssetData(guid);
+					if (yyObject == null) return;
+					var objDir = Path.directory(fullPath(path));
+					var objName = name;
+					for (qe in yyObject.eventList) {
+						var epath = VitObject.getEventFileName(qe);
+						var efull = Path.join([objDir, epath + ".gml"]);
+						var ectx = '$objName:$epath';
+						var gmlOld = getAssetText(efull);
+						var gmlNew = VitGML.proc(gmlOld, ectx);
+						if (gmlNew != gmlOld) {
+							Sys.println('Modified $ectx.');
+							File.saveContent(efull, gmlNew);
+						}
 					}
-					imp.include();
-				} else {
-					var gmlOld = getAssetText(gmlPath);
-					var gmlNew = VitGML.proc(gmlOld, yyv.resourceName);
-					if (gmlNew != gmlOld) {
-						Sys.println("Modified " + yyv.resourceName + ".");
-						File.saveContent(gmlPath, gmlNew);
+				};
+				case GMExtension: {
+					var yyExt:YyExtension = getAssetData(guid);
+					var extDir = Path.directory(fullPath(path));
+					for (file in yyExt.files) {
+						if (Path.extension(file.filename).toLowerCase() != "gml") continue;
+						var fileFull = Path.join([extDir, file.filename]);
+						var fileCtx = yyExt.name + ":" + file.filename;
+						var gmlOld = getAssetText(fileFull);
+						var gmlNew = VitGML.proc(gmlOld, fileCtx);
+						if (gmlNew != gmlOld) {
+							Sys.println('Modified $fileCtx.');
+							File.saveContent(fileFull, gmlNew);
+						}
 					}
-				}
-			};
-			case GMObject: {
-				var yyObject:YyObject = getAssetData(yyr.Key);
-				if (yyObject == null) continue;
-				var objDir = Path.directory(fullPath(yyr.Value.resourcePath));
-				var objName = yyr.Value.resourceName;
-				for (qe in yyObject.eventList) {
-					var epath = VitObject.getEventFileName(qe);
-					var efull = Path.join([objDir, epath + ".gml"]);
-					var ectx = '$objName:$epath';
-					var gmlOld = getAssetText(efull);
-					var gmlNew = VitGML.proc(gmlOld, ectx);
-					if (gmlNew != gmlOld) {
-						Sys.println('Modified $ectx.');
-						File.saveContent(efull, gmlNew);
-					}
-				}
-			};
-			case GMExtension: {
-				var yyExt:YyExtension = getAssetData(yyr.Key);
-				var extDir = Path.directory(fullPath(yyr.Value.resourcePath));
-				for (file in yyExt.files) {
-					if (Path.extension(file.filename).toLowerCase() != "gml") continue;
-					var fileFull = Path.join([extDir, file.filename]);
-					var fileCtx = yyExt.name + ":" + file.filename;
-					var gmlOld = getAssetText(fileFull);
-					var gmlNew = VitGML.proc(gmlOld, fileCtx);
-					if (gmlNew != gmlOld) {
-						Sys.println('Modified $fileCtx.');
-						File.saveContent(fileFull, gmlNew);
-					}
-				}
-			};
-			default:
-		}
+				};
+				default:
+			}
+		});
 		//
 		var changedYYP = procImports();
 		if (changedYYP) {
 			SysTools.blockStart("Saving project");
-			for (yyr in project.resources) {
-				Reflect.deleteField(yyr.Value, "resourceName");
+			if (!v23) for (yyr in project.resources) {
+				Reflect.deleteField(yyr.v22.Value, "resourceName");
 			}
 			File.saveContent(projectPath, YyJson.stringify(project));
 			SysTools.blockEnd();

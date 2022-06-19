@@ -31,16 +31,29 @@ class VitObject {
 		linkType(13, "Gesture");
 		r;
 	}
-	public static function getEventFileName(qe:YyObjectEvent):Ident {
-		var etype = qe.eventtype;
-		var enumb = qe.enumb;
-		var ecobj = qe.collisionObjectId;
-		//
-		var epath = eventTypeNames[etype];
-		if (etype == 4) { // collision
-			epath += "_" + qe.id;
-		} else epath += "_" + enumb;
-		return epath;
+	public static function getEventFileName(_qe:YyObjectEvent):Ident {
+		if (_qe.isV23) {
+			var ne = _qe.v23;
+			var etype = ne.eventType;
+			var enumb = ne.eventNum;
+			var ecobj = ne.collisionObjectId;
+			var epath = eventTypeNames[etype];
+			if (etype == 4) { // collision
+				epath += "_" + ecobj.name;
+			} else epath += "_" + enumb;
+			return epath;
+		} else {
+			var qe = _qe.v22;
+			var etype = qe.eventtype;
+			var enumb = qe.enumb;
+			var ecobj = qe.collisionObjectId;
+			//
+			var epath = eventTypeNames[etype];
+			if (etype == 4) { // collision
+				epath += "_" + qe.id;
+			} else epath += "_" + enumb;
+			return epath;
+		}
 	}
 	public static function index(name:String, q:YyObject, inPath:FullPath) {
 		var inDir = Path.directory(inPath);
@@ -73,7 +86,8 @@ class VitObject {
 		//
 		var eventList:Array<VitObjectEvent> = [];
 		var cleanupCode:String = null;
-		for (qe in q.eventList) {
+		for (_qe in q.eventList) {
+			var qe = _qe.v22;
 			var etype = qe.eventtype;
 			var enumb = qe.enumb;
 			var ecobj = qe.collisionObjectId;

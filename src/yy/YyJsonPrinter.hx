@@ -69,10 +69,10 @@ class YyJsonPrinter {
 		if (obj == null) { // also hits "undefined"
 			b.add("null");
 		}
-		else if (Std.is(obj, String)) {
+		else if (obj is String) {
 			stringify_string(b, obj);
 		}
-		else if (Std.is(obj, Array)) {
+		else if (obj is Array) {
 			var indentString = YyJsonPrinter.indentString;
 			var arr:Array<Dynamic> = obj;
 			var len = arr.length;
