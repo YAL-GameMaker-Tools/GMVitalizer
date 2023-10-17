@@ -8,15 +8,15 @@ The tool will convert most project contents to GMS1 format, convert most of GML 
 ## Using
 You give the tool a path to the YYP project and to the resulting GMX project, along with any optional arguments.
 
-Running the standalone version might be as following:
+Running the standalone version might be as following (after opening a Command Prompt / PowerShell in the GMVitalizer directory from a shift-right-click menu):
 ```bat
-GMVitalizer my_project/my_project.yyp my_project.gmx/my_project.project.gmx
+.\GMVitalizer.exe "C:\my_project\my_project.yyp" "C:\my_project.gmx\my_project.project.gmx"
 ```
-or running the Neko version:
+or running the Neko version (such as after opening a terminal in GMVitalizer directory on Mac/Linux):
 ```bat
 neko gmvitalizer.n my_project/my_project.yyp my_project.gmx/my_project.project.gmx
 ```
-Optional arguments are as following:
+After the two paths, you can add one or more optional arguments:
 - `--rules filepath`: Uses a custom rules-file instead of default rules.gml  
   Example: `--rules myrules.gml`
 - `--bkrx regexp`: Specifies a regular expression for telling apart background-sprites from regular sprites.
