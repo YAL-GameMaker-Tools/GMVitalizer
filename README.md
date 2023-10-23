@@ -5,6 +5,14 @@ As per name, perhaps the only good use case for this is PS Vita development, as 
 
 The tool will convert most project contents to GMS1 format, convert most of GML changes back, and convert/create compatibility scripts for most of GMS2-specific functions. 
 
+## On GameMaker Studio 2.3+ and GM2022+ compatibility
+
+The tool does not work with GameMaker versions newer than GMS2.2.5 and probably never will -
+both GameMaker itself and GameMaker Language in particular have grown a lot since then,
+and most of these changes cannot be backported to GameMaker: Studio without major sacrifices.
+
+The only thing that's somewhat-compatible is GMCompFix, which replaces some of the GM:S compatibility scripts in GMS2/GM2022+ projects by slightly-better versions.
+
 ## Using
 You give the tool a path to the YYP project and to the resulting GMX project, along with any optional arguments.
 
